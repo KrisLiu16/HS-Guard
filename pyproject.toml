@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hs-guard"
+version = "0.1.0"
+description = "Hybrid-state streaming safety classifier and CUDA inference engine"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE"}
+authors = [{name = "Zhihao Liu"}, {name = "Naive N0.5"}]
+dependencies = ["torch==2.7.1", "transformers==5.17.0", "flash-linear-attention==0.5.2", "fla-core==0.5.2", "safetensors==0.8.0", "tokenizers==0.23.2", "huggingface-hub>=1.0", "numpy>=1.25"]
+
+[project.scripts]
+hs-guard = "hs_guard.cli:main"
+
+[tool.setuptools]
+license-files = ["LICENSE", "LICENSE-FLA.txt", "NOTICE"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

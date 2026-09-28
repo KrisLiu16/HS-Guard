@@ -1,0 +1,33 @@
+{
+  "format": "hs-guard-release-verification-v1",
+  "gpu": "NVIDIA L20",
+  "branches": {
+    "redline": {
+      "cases": 64,
+      "max_abs_score_difference": 0.0064513203125000085,
+      "decision_changes": 0
+    },
+    "general": {
+      "cases": 64,
+      "max_abs_score_difference": 0.005025893058776876,
+      "decision_changes": 0
+    }
+  },
+  "streaming": {
+    "cases": 16,
+    "max_abs_score_difference": 0.002106390396118152,
+    "decision_changes": 0
+  },
+  "matched_single_record_control": {
+    "redline": {
+      "cases": 64,
+      "max_abs_score_difference": 0.0
+    },
+    "general": {
+      "cases": 64,
+      "max_abs_score_difference": 0.0
+    }
+  },
+  "passed": true,
+  "batching_note": "Archived benchmark used length-bucketed batches; matched-control reference uses one record per forward."
+}

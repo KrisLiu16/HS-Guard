@@ -1,0 +1,8 @@
+HS-Guard
+Copyright 2026 Zhihao Liu and Naive N0.5
+
+Built on Qwen3.5-0.8B-Base by the Qwen Team (Apache-2.0).
+The general safety head was trained with outputs from Qwen3Guard-Stream-4B.
+Gated-delta-rule kernel portions derive from flash-linear-attention (MIT).
+The FLA copyright and permission notice are included in third_party_licenses/FLA-MIT.txt.
+Upstream projects are credited; no endorsement is implied.
