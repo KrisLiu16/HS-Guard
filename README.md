@@ -19,9 +19,13 @@ HS-Guard scores prompts and live response tokens with a 754.5M-parameter hybrid 
 | ToxicChat held prompt F1, general branch | **74.16** | 70.51 |
 | Aegis 2.0 held response F1, general branch | **81.65** | 78.95 |
 
+### Streaming performance
+
+![HS-Guard streaming latency and concurrent moderation on NVIDIA L20](docs/figures/streaming.png)
+
 On one NVIDIA L20, the tested streaming engine measures **2.38 ms** single-token median service latency and supports 352 simulated concurrent streams, with P95 no higher than 18.37 ms and throughput at least 15,075 token/s across initial contexts of 512, 2,048 and 8,000 tokens.
 
-The report defines operating points, datasets and timing. These are selected results, not a universal ranking. The reference and streaming paths have separate numerical checks.
+See the [engine benchmark setup](docs/ENGINE.md#measured-performance) for timing scope and the SGLang baseline. The report defines operating points, datasets and timing. These are selected results, not a universal ranking. The reference and streaming paths have separate numerical checks.
 
 ## Install
 
