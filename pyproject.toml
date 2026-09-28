@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hs-guard"
-version = "0.1.0"
+version = "0.1.1"
 description = "Hybrid-state streaming safety classifier and CUDA inference engine"
 readme = "README.md"
 requires-python = ">=3.10"

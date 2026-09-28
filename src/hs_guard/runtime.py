@@ -25,8 +25,16 @@ def verify_model(directory):
     if not required.issubset(manifest.get('files', {})):
         raise ValueError('Model manifest is missing required assets')
     for name, expected in manifest['files'].items():
-        p = root / name
-        if p.is_symlink() or not p.resolve().is_relative_to(root) or not p.is_file():
+        relative = Path(name)
+        if relative.is_absolute() or '..' in relative.parts:
+            raise ValueError(f'Invalid model asset: {name}')
+        p = root / relative
+        resolved = p.resolve()
+        inside_bundle = resolved.is_relative_to(root)
+        # Hub snapshots link immutable assets into their repository's blob cache.
+        inside_hub_blobs = (root.parent.name == 'snapshots' and
+                            resolved.is_relative_to((root.parent.parent / 'blobs').resolve()))
+        if not p.is_file() or not (inside_bundle or inside_hub_blobs):
             raise ValueError(f'Invalid model asset: {name}')
         if sha256(p) != expected:
             raise ValueError(f'Model asset checksum mismatch: {name}')
