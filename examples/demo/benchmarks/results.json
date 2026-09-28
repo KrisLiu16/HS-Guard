@@ -1,0 +1,172 @@
+{
+  "serial": {
+    "mode": "serial",
+    "weight_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "decision_changes": 0,
+    "max_score_diff": 0.009022318146983843,
+    "measurements": [
+      {
+        "concurrency": 1,
+        "repeat": 0,
+        "p50_ms": 2.5304285809397697,
+        "p95_ms": 2.547722961753607,
+        "samples": 100
+      },
+      {
+        "concurrency": 1,
+        "repeat": 1,
+        "p50_ms": 2.5290334597229958,
+        "p95_ms": 2.5428200140595436,
+        "samples": 100
+      },
+      {
+        "concurrency": 4,
+        "repeat": 0,
+        "p50_ms": 6.544933654367924,
+        "p95_ms": 10.359888896346092,
+        "samples": 400
+      },
+      {
+        "concurrency": 4,
+        "repeat": 1,
+        "p50_ms": 6.535783410072327,
+        "p95_ms": 10.422016587108374,
+        "samples": 400
+      },
+      {
+        "concurrency": 16,
+        "repeat": 0,
+        "p50_ms": 22.310304455459118,
+        "p95_ms": 41.80429959669709,
+        "samples": 1600
+      },
+      {
+        "concurrency": 16,
+        "repeat": 1,
+        "p50_ms": 22.3310524597764,
+        "p95_ms": 41.87537506222725,
+        "samples": 1600
+      }
+    ],
+    "latency": {
+      "ticks": 2000,
+      "p50_ms": 23.42,
+      "p95_ms": 41.89,
+      "tokens_per_tick": 17.4
+    }
+  },
+  "batch": {
+    "mode": "batch",
+    "weight_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "decision_changes": 0,
+    "max_score_diff": 0.005858171481365249,
+    "measurements": [
+      {
+        "concurrency": 1,
+        "repeat": 0,
+        "p50_ms": 3.6605894565582275,
+        "p95_ms": 3.676203917711973,
+        "samples": 100
+      },
+      {
+        "concurrency": 1,
+        "repeat": 1,
+        "p50_ms": 3.6268485710024834,
+        "p95_ms": 3.658103570342064,
+        "samples": 100
+      },
+      {
+        "concurrency": 4,
+        "repeat": 0,
+        "p50_ms": 4.679534584283829,
+        "p95_ms": 4.792587831616402,
+        "samples": 400
+      },
+      {
+        "concurrency": 4,
+        "repeat": 1,
+        "p50_ms": 4.706038162112236,
+        "p95_ms": 4.830819554626942,
+        "samples": 400
+      },
+      {
+        "concurrency": 16,
+        "repeat": 0,
+        "p50_ms": 5.555540323257446,
+        "p95_ms": 6.016194820404053,
+        "samples": 1600
+      },
+      {
+        "concurrency": 16,
+        "repeat": 1,
+        "p50_ms": 5.523253232240677,
+        "p95_ms": 6.036817375570536,
+        "samples": 1600
+      }
+    ],
+    "latency": {
+      "ticks": 2000,
+      "p50_ms": 5.52,
+      "p95_ms": 6.04,
+      "tokens_per_tick": 17.4,
+      "scheduler": {
+        "slots": 16,
+        "outstanding": 0,
+        "batches": 881,
+        "mean_batch": 6.98,
+        "max_batch": 16,
+        "failed": false
+      }
+    }
+  },
+  "environment": {
+    "gpu": "NVIDIA L20",
+    "torch": "2.7.1",
+    "cuda": "12.8",
+    "initial_context_tokens": 2048,
+    "increment_tokens": 1,
+    "warmup_ticks": 10,
+    "measured_ticks": 100,
+    "repeats": 2,
+    "synchronized_arrivals": true,
+    "batch_wait_ms": 1,
+    "slots": 16
+  },
+  "scope": "In-process request wall time including queue, state restore/checkpoint and frontend record conversion. Excludes HTTP, tokenization, prefill, upstream generation and cold start.",
+  "http_regression": {
+    "model_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "engine": "SlotStreamEngineV8",
+    "selfcheck": {
+      "tokens": 83,
+      "tokenizer_match": true,
+      "stream_positions": 83,
+      "max_prob_diff_stream_vs_whole": 0.0009,
+      "stream_seconds": 0.18
+    },
+    "cases": 64,
+    "parallel_sessions": 16,
+    "decision_changes": 0,
+    "max_abs_score_difference": 0.0050350601905855275
+  },
+  "deployed_http_regression": {
+    "model_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "engine": "SlotStreamEngineV8",
+    "selfcheck": {
+      "tokens": 83,
+      "tokenizer_match": true,
+      "stream_positions": 83,
+      "max_prob_diff_stream_vs_whole": 0.0009,
+      "stream_seconds": 0.18
+    },
+    "cases": 64,
+    "parallel_sessions": 16,
+    "decision_changes": 0,
+    "max_abs_score_difference": 0.007148676825117828
+  },
+  "deployed_source_sha256": {
+    "batching.py": "632e541c2531dd3e30f943b71923930b1017d9bcd394152448fd0aae7466344e",
+    "index.html": "a1de40ce0ea3f443ee78842f5735cbf9a9d0351db57870c0b0278103074ba3ae",
+    "runtime_v10.py": "ce5e643ba75cb935e219a8f75956c970d3ec6d7c082530970a1489f79b131fd0",
+    "server.py": "ba861b65612d1390e487eee9b9d8e9a61a319a1375d1d9e91b5e7b886faf19cb"
+  }
+}

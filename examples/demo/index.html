@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>流式审核测试台</title>
+<link rel="stylesheet" href="static/tdesign.min.css">
+<style>
+:root {
+  --hot-bg: rgba(213, 73, 65, 0.22); --hot-line: #d54941;
+  --warm-bg: rgba(250, 178, 25, 0.30);
+  --series-1: var(--td-brand-color); --series-2: var(--td-warning-color);
+}
+:root[theme-mode="dark"] { --hot-bg: rgba(240, 100, 90, 0.34); --hot-line: #f07068; --warm-bg: rgba(250, 178, 25, 0.24); }
+[v-cloak] { display: none; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--td-bg-color-page); color: var(--td-text-color-primary); font-family: var(--td-font-family); }
+.shell { height: 100vh; }
+.topbar { display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 20px; background: var(--td-bg-color-container); border-bottom: 1px solid var(--td-component-stroke); }
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.logo { width: 30px; height: 30px; border-radius: 8px; background: var(--td-brand-color); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+.title { font-size: 16px; font-weight: 600; line-height: 20px; }
+.subtitle { font-size: 12px; color: var(--td-text-color-placeholder); line-height: 16px; }
+.status { flex: 1; min-width: 0; display: flex; gap: 6px; flex-wrap: nowrap; overflow: hidden; }
+.dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--td-success-color); margin-right: 6px; vertical-align: 2px; }
+.menu-btn { display: none !important; }
+.main { height: calc(100vh - 56px); }
+.side { background: var(--td-bg-color-container); border-right: 1px solid var(--td-component-stroke); overflow-y: auto; }
+.side-inner { padding: 16px 16px 32px; }
+.panel { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--td-component-stroke); }
+.panel:last-child { border-bottom: 0; }
+.panel-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.panel-title::before { content: ""; width: 3px; height: 14px; border-radius: 2px; background: var(--td-brand-color); }
+.model-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 6px; background: var(--td-bg-color-secondarycontainer); }
+.model-card .mc-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--td-brand-color-light); color: var(--td-brand-color); display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+.model-card .mc-name { font-weight: 500; font-size: 13px; }
+.model-card .mc-sub { font-size: 12px; color: var(--td-text-color-placeholder); }
+.field-label { font-size: 12px; color: var(--td-text-color-secondary); margin: 12px 0 6px; }
+.full { width: 100%; display: flex !important; }
+.full .t-radio-button { flex: 1; justify-content: center; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row2 .t-input-number { width: 100%; }
+.note { font-size: 12px; line-height: 18px; color: var(--td-text-color-placeholder); margin-top: 6px; }
+.mt8 { margin-top: 8px; } .mt12 { margin-top: 12px; }
+.side .t-form__item { margin-bottom: 12px; }
+.side .t-collapse { margin-top: 8px; }
+.side .t-collapse-panel__header { padding-left: 0 !important; font-size: 13px; color: var(--td-text-color-secondary); }
+.side .t-collapse-panel__content { padding: 4px 0 0 !important; }
+.content { display: flex; flex-direction: column; min-width: 0; height: 100%; }
+.rulebar { display: flex; gap: 8px 18px; flex-wrap: wrap; align-items: center; padding: 10px 24px; font-size: 12px; color: var(--td-text-color-secondary); border-bottom: 1px solid var(--td-component-stroke); background: var(--td-bg-color-container); }
+.rb-k { color: var(--td-text-color-placeholder); margin-right: 6px; }
+.rb-v { color: var(--td-text-color-primary); font-weight: 500; }
+.legend { display: inline-flex; gap: 12px; margin-left: auto; }
+.sw { display: inline-block; width: 16px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.sw.hot { background: var(--hot-bg); box-shadow: inset 0 -2px 0 var(--hot-line); } .sw.warm { background: var(--warm-bg); } .sw.pend { border: 1px dashed var(--td-text-color-placeholder); }
+.chat { flex: 1; overflow-y: auto; padding: 24px; }
+.banner { max-width: 960px; margin: 0 auto 16px; }
+.welcome { max-width: 760px; margin: 6vh auto 0; text-align: center; }
+.welcome h2 { font-size: 22px; font-weight: 600; margin: 0 0 8px; }
+.welcome p { color: var(--td-text-color-secondary); margin: 0 0 24px; line-height: 22px; }
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; text-align: left; }
+.feature { background: var(--td-bg-color-container); border: 1px solid var(--td-component-stroke); border-radius: 8px; padding: 14px 16px; }
+.feature b { display: block; margin-bottom: 4px; font-size: 14px; }
+.feature span { font-size: 12px; line-height: 18px; color: var(--td-text-color-secondary); }
+.caveat { margin-top: 18px; text-align: left; }
+.msg { display: flex; gap: 12px; max-width: 960px; margin: 0 auto 20px; }
+.avatar { flex: 0 0 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+.avatar.user { background: var(--td-brand-color-light); color: var(--td-brand-color); }
+.avatar.assistant { background: var(--td-bg-color-secondarycontainer); color: var(--td-text-color-secondary); border: 1px solid var(--td-component-stroke); }
+.bubble { flex: 1; min-width: 0; }
+.msg-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; color: var(--td-text-color-placeholder); }
+.card { background: var(--td-bg-color-container); border: 1px solid var(--td-component-stroke); border-radius: 8px; padding: 14px 16px; }
+.msg.user .card { background: var(--td-bg-color-secondarycontainer); border-color: transparent; }
+.text { white-space: pre-wrap; word-break: break-word; line-height: 24px; font-size: 14px; }
+.think { background: var(--td-bg-color-secondarycontainer); border-radius: 6px; padding: 8px 12px; margin-bottom: 12px; max-height: 280px; overflow-y: auto; }
+.think-label { font-size: 12px; color: var(--td-text-color-placeholder); margin-bottom: 2px; }
+.think .text { color: var(--td-text-color-secondary); font-size: 13px; line-height: 22px; }
+.t { border-radius: 2px; }
+.t.warm { background: var(--warm-bg); }
+.t.hot { background: var(--hot-bg); box-shadow: inset 0 -2px 0 var(--hot-line); }
+.t.prov { text-decoration: underline dotted var(--td-text-color-placeholder); text-underline-offset: 4px; }
+.t.fire { outline: 2px solid var(--hot-line); outline-offset: 1px; }
+.t.hl { outline: 2px solid var(--td-brand-color); outline-offset: 1px; }
+.pending { color: var(--td-text-color-placeholder); }
+.withheld { color: var(--td-text-color-placeholder); text-decoration: line-through; text-decoration-color: var(--hot-line); }
+.cutmark { display: inline-block; font-size: 11px; line-height: 16px; padding: 0 6px; margin: 0 4px; border-radius: 3px; background: var(--td-error-color); color: #fff; vertical-align: 1px; }
+.verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 12px; font-size: 12px; }
+.meta { color: var(--td-text-color-secondary); }
+.err { margin-top: 10px; }
+.chart { position: relative; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--td-component-stroke); }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart .axis { font-size: 10px; fill: var(--td-text-color-placeholder); }
+.chart .grid { stroke: var(--td-component-stroke); stroke-width: 1; }
+.chart .tau { stroke: var(--td-text-color-secondary); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.chart .s1 { fill: none; stroke: var(--series-1); stroke-width: 2; stroke-linejoin: round; }
+.chart .s2 { fill: none; stroke: var(--series-2); stroke-width: 2; stroke-linejoin: round; }
+.chart .firel { stroke: var(--hot-line); stroke-width: 2; }
+.chart .cross { stroke: var(--td-text-color-placeholder); stroke-width: 1; }
+.chart .dot { fill: var(--series-1); stroke: var(--td-bg-color-container); stroke-width: 2; }
+.chart-legend { display: flex; gap: 14px; font-size: 12px; color: var(--td-text-color-secondary); margin-top: 4px; flex-wrap: wrap; }
+.chart-legend i { display: inline-block; width: 14px; height: 2px; vertical-align: 4px; margin-right: 5px; }
+#tip { position: fixed; z-index: 3000; pointer-events: none; display: none; max-width: 340px; background: var(--td-bg-color-container); border: 1px solid var(--td-component-stroke); box-shadow: var(--td-shadow-2); border-radius: 6px; padding: 8px 10px; font-size: 12px; color: var(--td-text-color-primary); }
+#tip .tk { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--td-bg-color-secondarycontainer); padding: 0 4px; border-radius: 3px; white-space: pre-wrap; }
+#tip table { border-collapse: collapse; margin-top: 6px; }
+#tip td { padding: 1px 10px 1px 0; color: var(--td-text-color-secondary); }
+#tip td.v { color: var(--td-text-color-primary); text-align: right; font-variant-numeric: tabular-nums; }
+#tip .note { margin-top: 4px; }
+.composer { border-top: 1px solid var(--td-component-stroke); background: var(--td-bg-color-container); padding: 12px 24px 14px; }
+.composer-inner { max-width: 960px; margin: 0 auto; }
+.replay-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 10px; }
+.input-row { display: flex; gap: 10px; align-items: flex-end; }
+.input-row .t-textarea { flex: 1; }
+.input-row .t-button { height: 40px; min-width: 84px; }
+.hint { font-size: 12px; color: var(--td-text-color-placeholder); margin-top: 6px; display: flex; justify-content: space-between; gap: 12px; }
+@media (max-width: 960px) {
+  .menu-btn { display: inline-flex !important; }
+  .status { display: none; }
+  .side { position: fixed !important; z-index: 2000; top: 56px; bottom: 0; left: 0; transform: translateX(-102%); transition: transform .2s; box-shadow: var(--td-shadow-3); }
+  .side.open { transform: none; }
+  .features { grid-template-columns: 1fr; }
+  .replay-grid { grid-template-columns: 1fr; }
+  .chat, .composer, .rulebar { padding-left: 16px; padding-right: 16px; }
+  .legend { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+  <t-layout class="shell">
+    <t-header class="topbar">
+      <t-button class="menu-btn" variant="outline" size="small" @click="drawer = !drawer">设置</t-button>
+      <div class="brand">
+        <div class="logo">审</div>
+        <div><div class="title">流式审核测试台</div><div class="subtitle">Streaming Guard · 逐 token 审核</div></div>
+      </div>
+      <div class="status">
+        <t-tag v-if="!info" variant="light">连接中…</t-tag>
+        <t-tag v-else-if="info.error" theme="danger" variant="light">加载失败：{{ info.error }}</t-tag>
+        <t-tag v-else-if="!info.ready" theme="warning" variant="light">模型加载中 {{ info.loading_seconds || 0 }}s</t-tag>
+        <template v-else>
+          <t-tag theme="success" variant="light"><span class="dot"></span>就绪</t-tag>
+          <t-tooltip :content="'权重 SHA256 ' + info.checkpoint_sha256"><t-tag variant="light-outline">审核模型 {{ (info.checkpoint_sha256 || '').slice(0, 8) }} · {{ info.model_label || 'HS-Guard v10' }}</t-tag></t-tooltip>
+          <t-tag variant="light-outline">{{ info.device }}</t-tag>
+          <t-tooltip content="同一段文字逐段流式打分与一次整段前向的最大概率差"><t-tag variant="light-outline">自检 Δ {{ fmt(info.selfcheck && info.selfcheck.max_prob_diff_stream_vs_whole) }}</t-tag></t-tooltip>
+          <t-tooltip v-if="info.latency && info.latency.ticks" content="每次审核前向的耗时（一次可能包含多个 token）"><t-tag variant="light-outline">审核 P50 {{ info.latency.p50_ms }} ms · P95 {{ info.latency.p95_ms }} ms</t-tag></t-tooltip>
+        </template>
+      </div>
+      <t-space size="small">
+        <t-button variant="outline" @click="exportJson" :disabled="!messages.length">导出</t-button>
+        <t-button theme="primary" @click="newChat" :disabled="busy">新对话</t-button>
+      </t-space>
+    </t-header>
+    <t-layout class="main">
+      <t-aside class="side" :class="{ open: drawer }" width="340px">
+        <div class="side-inner">
+          <section class="panel">
+            <div class="panel-title">对话模型</div>
+            <div class="model-card">
+              <div class="mc-icon">{{ (builtin.label || 'M').slice(0, 1).toUpperCase() }}</div>
+              <div><div class="mc-name">{{ builtin.label || '内置模型' }}</div><div class="mc-sub">{{ builtin.model || '—' }} · 回答最长 {{ builtin.max_tokens || '—' }} token</div></div>
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-title">测试方式</div>
+            <div class="field-label" style="margin-top:0">回答来源</div>
+            <t-radio-group v-model="cfg.mode" variant="default-filled" class="full">
+              <t-radio-button value="llm">和模型对话</t-radio-button>
+              <t-radio-button value="replay">粘贴文本回放</t-radio-button>
+            </t-radio-group>
+            <div v-if="cfg.mode === 'replay'">
+              <div class="note">不调模型，把贴好的回答按下面的速度逐段送审，适合测模型自己不肯说的内容。</div>
+              <div class="row2 mt8">
+                <div><div class="field-label">每次字数</div><t-input-number v-model="cfg.replayChars" :min="1" :max="64" theme="normal"></t-input-number></div>
+                <div><div class="field-label">间隔（毫秒）</div><t-input-number v-model="cfg.replayInterval" :min="0" :max="2000" :step="10" theme="normal"></t-input-number></div>
+              </div>
+            </div>
+            <div class="field-label">命中后</div>
+            <t-radio-group v-model="cfg.action" variant="default-filled" class="full">
+              <t-radio-button value="cut">截断</t-radio-button>
+              <t-radio-button value="observe">只标记，不截断</t-radio-button>
+            </t-radio-group>
+          </section>
+
+          <section class="panel" v-if="cfg.aRule">
+            <div class="panel-title">回答审核规则</div>
+            <t-select v-model="cfg.aPreset" :options="presetOptions('assistant')" @change="applyPreset('a')"></t-select>
+            <div class="note">{{ presetNote('a') }}</div>
+            <t-collapse borderless :default-value="[]">
+              <t-collapse-panel value="a" header="规则参数">
+                <t-form label-align="top" :colon="false">
+                  <div class="row2">
+                    <t-form-item label="分数"><t-select v-model="cfg.aRule.score" :options="scoreOptions" @change="markCustom('a')"></t-select></t-form-item>
+                    <t-form-item label="规则"><t-select v-model="cfg.aRule.rule" :options="ruleOptions" @change="markCustom('a')"></t-select></t-form-item>
+                    <t-form-item label="温度 T"><t-input-number v-model="cfg.aRule.T" :min="0.1" :max="20" :step="0.1" theme="normal" :disabled="['argmax2', 'off'].includes(cfg.aRule.rule)" @change="markCustom('a')"></t-input-number></t-form-item>
+                    <t-form-item label="阈值 τ"><t-input-number v-model="cfg.aRule.tau" :min="0.0001" :max="0.999999" :step="0.001" :decimal-places="6" theme="normal" :disabled="['argmax2', 'off'].includes(cfg.aRule.rule)" @change="markCustom('a')"></t-input-number></t-form-item>
+                    <t-form-item label="连续次数 k"><t-input-number v-model="cfg.aRule.k" :min="1" :max="256" theme="normal" :disabled="cfg.aRule.rule !== 'threshold'" @change="markCustom('a')"></t-input-number></t-form-item>
+                    <t-form-item label="滑动平均 α"><t-input-number v-model="cfg.aRule.alpha" :min="0.01" :max="1" :step="0.05" :decimal-places="2" theme="normal" :disabled="cfg.aRule.rule !== 'ema'" @change="markCustom('a')"></t-input-number></t-form-item>
+                  </div>
+                </t-form>
+              </t-collapse-panel>
+            </t-collapse>
+          </section>
+
+          <section class="panel" v-if="cfg.uRule">
+            <div class="panel-title">提问审核规则</div>
+            <t-select v-model="cfg.uPreset" :options="presetOptions('user')" @change="applyPreset('u')"></t-select>
+            <div class="note">{{ presetNote('u') }}</div>
+            <t-collapse borderless :default-value="[]">
+              <t-collapse-panel value="u" header="规则参数">
+                <t-form label-align="top" :colon="false">
+                  <div class="row2">
+                    <t-form-item label="规则"><t-select v-model="cfg.uRule.rule" :options="ruleOptions" @change="markCustom('u')"></t-select></t-form-item>
+                    <t-form-item label="阈值 τ"><t-input-number v-model="cfg.uRule.tau" :min="0.0001" :max="0.999999" :step="0.001" :decimal-places="6" theme="normal" :disabled="['argmax2', 'off'].includes(cfg.uRule.rule)" @change="markCustom('u')"></t-input-number></t-form-item>
+                  </div>
+                </t-form>
+              </t-collapse-panel>
+            </t-collapse>
+            <div class="note mt12">每次只提交倒数第 {{ info && info.hold_back ? info.hold_back : 3 }} 个 token 之前的部分；消息结束时，尾部 token 给暂定分（虚线下划线）。改规则后，已有消息会按新规则重新显示。</div>
+          </section>
+        </div>
+      </t-aside>
+
+      <t-content class="content">
+        <div class="rulebar">
+          <span><span class="rb-k">回答</span><span class="rb-v">{{ presetName('a') }}</span></span>
+          <span><span class="rb-k">提问</span><span class="rb-v">{{ presetName('u') }}</span></span>
+          <span><span class="rb-k">命中后</span><span class="rb-v">{{ cfg.action === 'cut' ? '截断' : '只标记' }}</span></span>
+          <span class="legend"><span><span class="sw hot"></span>分数 &gt; τ</span><span><span class="sw warm"></span>&gt; 0.5</span><span><span class="sw pend"></span>暂定 / 未审</span></span>
+        </div>
+        <div class="chat" ref="chatEl" @mouseover="onHover" @mouseout="onOut" @scroll="onScroll">
+          <t-alert v-if="info && info.ready && !builtinOk" class="banner" theme="warning" message="内置模型未配置 API key。当前可使用“粘贴文本回放”。"></t-alert>
+          <div v-if="!messages.length" class="welcome">
+            <h2>HS-Guard v10 交互测试</h2>
+            <p>提问先过用户头；回答（包括思考过程）边生成边过回答头。每个 token 的风险分数标在字上，下面画出分数曲线。</p>
+            <div class="features">
+              <div class="feature"><b>逐 token 打分</b><span>悬停在字上或曲线上，看 safe / unsafe / 有争议三类概率。</span></div>
+              <div class="feature"><b>边生成边截断</b><span>命中即停止生成，被截掉的部分划掉显示；也可以只标记、不截断。</span></div>
+              <div class="feature"><b>规则随时切换</b><span>使用 v10 默认阈值；修改规则后，已有消息按新规则重算。</span></div>
+            </div>
+          </div>
+          <chat-message v-for="(m, i) in messages" :key="m.id" :m="m" :idx="i" :arule="cfg.aRule" :urule="cfg.uRule" :action="cfg.action"></chat-message>
+        </div>
+        <div class="composer">
+          <div class="composer-inner">
+            <div v-if="cfg.mode === 'replay'" class="replay-grid">
+              <t-textarea v-model="replay.reasoning" placeholder="回答里的思考过程（可选，会先于回答送审）" :autosize="{ minRows: 3, maxRows: 8 }"></t-textarea>
+              <t-textarea v-model="replay.content" placeholder="要回放审核的回答文本" :autosize="{ minRows: 3, maxRows: 8 }"></t-textarea>
+            </div>
+            <div class="input-row">
+              <t-textarea v-model="input" :placeholder="cfg.mode === 'replay' ? '回放对应的提问（可以留空）' : '输入提问，Enter 发送，Shift + Enter 换行'" :autosize="{ minRows: 1, maxRows: 8 }" @keydown="onKey"></t-textarea>
+              <t-button v-if="busy" theme="danger" variant="outline" @click="stop">停止</t-button>
+              <t-button v-else theme="primary" :disabled="!canSend" @click="send">发送</t-button>
+            </div>
+            <div class="hint"><span>{{ hint }}</span><span v-if="messages.length">{{ messages.length }} 条消息</span></div>
+          </div>
+        </div>
+      </t-content>
+    </t-layout>
+  </t-layout>
+</div>
+<div id="tip"></div>
+
+<script type="text/x-template" id="tpl-message">
+  <div class="msg" :class="m.role" :data-i="idx">
+    <div class="avatar" :class="m.role">{{ m.role === 'user' ? '问' : '答' }}</div>
+    <div class="bubble">
+      <div class="msg-head">
+        <span>{{ who }}</span>
+        <t-tag v-if="m.blocked" size="small" theme="danger" variant="light">已拦截，不进入后续上下文</t-tag>
+        <t-tag v-else-if="m.excluded" size="small" variant="light">本轮没有回答，不进入后续上下文</t-tag>
+      </div>
+      <div class="card">
+        <div v-if="view.think" class="think">
+          <div class="think-label">思考过程 · 一并送审</div>
+          <div class="text" v-html="view.think"></div>
+        </div>
+        <div class="text" v-html="view.body"></div>
+        <div class="verdict" v-if="view.badges.length || view.metas.length">
+          <t-tag v-for="(b, j) in view.badges" :key="'b' + j" :theme="b.theme" variant="light">{{ b.text }}</t-tag>
+          <span v-for="(t, j) in view.metas" :key="'m' + j" class="meta">{{ t }}</span>
+        </div>
+        <t-alert v-if="m.error" class="err" theme="error" :message="m.error"></t-alert>
+        <guard-chart v-if="view.rows.length" :m="m" :rule="rule" :ver="m.ver"></guard-chart>
+      </div>
+    </div>
+  </div>
+</script>
+
+<script src="static/vue.global.prod.js"></script>
+<script src="static/tdesign.min.js"></script>
+<script>
+"use strict";
+const { createApp, reactive, computed, watch, markRaw, nextTick, ref } = Vue;
+const { MessagePlugin } = TDesign;
+
+const safeStore = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+safeStore.del("guardDemo.key");   // earlier versions could remember a personal key; the model key now lives on the server
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const fmt = (x, d = 4) => (x == null || Number.isNaN(x) ? "—" : Number(x).toFixed(d));
+const numOrUndef = (v) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+
+// ---- theme: follow the OS ------------------------------------------------------------
+const darkQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+function applyTheme() { if (darkQuery && darkQuery.matches) document.documentElement.setAttribute("theme-mode", "dark"); else document.documentElement.removeAttribute("theme-mode"); }
+applyTheme(); if (darkQuery && darkQuery.addEventListener) darkQuery.addEventListener("change", () => { applyTheme(); scheduleCharts(); });
+
+// ---- rules (mirror of server.py) -------------------------------------------------------
+function probs(l, T) { const s = l.map((v) => v / T); const m = Math.max(...s); const w = s.map((v) => Math.exp(v - m)); const z = w[0] + w[1] + w[2]; return w.map((v) => v / z); }
+function score(l, r) { const p = probs(l, r.T); return r.score === "unsafe" ? p[1] : 1 - p[0]; }
+const logit = (s) => { s = Math.min(Math.max(s, 1e-9), 1 - 1e-9); return Math.log(s / (1 - s)); };
+const sigmoid = (x) => 1 / (1 + Math.exp(-x));
+function firstFire(rows, r) {
+  if (r.rule === "off" || !rows.length) return -1;
+  if (r.rule === "endpoint") return score(rows[rows.length - 1], r) > r.tau ? rows.length - 1 : -1;
+  if (r.rule === "argmax2") {
+    const pos = r.score === "unsafe" ? [1] : [1, 2]; let prev = null;
+    for (let i = 0; i < rows.length; i++) { const l = rows[i]; const a = l[0] >= l[1] && l[0] >= l[2] ? 0 : (l[1] >= l[2] ? 1 : 2);
+      if (pos.includes(a) && a === prev) return i; prev = a; }
+    return -1;
+  }
+  if (r.rule === "threshold") { let run = 0; for (let i = 0; i < rows.length; i++) { run = score(rows[i], r) > r.tau ? run + 1 : 0; if (run >= r.k) return i; } return -1; }
+  const bound = logit(r.tau); let ema = null;
+  for (let i = 0; i < rows.length; i++) { const m = logit(score(rows[i], r)); ema = ema == null ? m : r.alpha * m + (1 - r.alpha) * ema; if (ema > bound) return i; }
+  return -1;
+}
+function emaSeries(rows, r) { let ema = null; return rows.map((l) => { const m = logit(score(l, r)); ema = ema == null ? m : r.alpha * m + (1 - r.alpha) * ema; return sigmoid(ema); }); }
+function validRule(r) { return r && r.T > 0 && r.tau > 0 && r.tau < 1 && r.k >= 1 && r.alpha > 0 && r.alpha <= 1; }
+
+// ---- conversation helpers -------------------------------------------------------------
+function guardText(m) {
+  if (m.role === "user") return m.content || "";
+  return (m.reasoning || "") + (m.reasoning && m.content ? "\n\n" : "") + (m.content || "");
+}
+function released(m) {
+  if (m.role !== "assistant") return { role: "user", content: m.content };
+  if (m.cut && m.verdict && m.verdict.fired) {
+    const end = m.verdict.char_end, R = m.reasoning.length;
+    if (end <= R) return { role: "assistant", reasoning: m.reasoning.slice(0, end), content: "" };
+    const sep = m.reasoning && m.content ? 2 : 0;
+    return { role: "assistant", reasoning: m.reasoning, content: m.content.slice(0, Math.max(0, end - R - sep)) };
+  }
+  return { role: "assistant", reasoning: m.reasoning, content: m.content };
+}
+function contentRows(m) {
+  const key = m.role === "user" ? "lu" : "la";
+  return m.tokens.filter((t) => !t.h).sort((x, y) => x.i - y.i).map((t) => ({ t, l: t[key] }));
+}
+
+// ---- message view ---------------------------------------------------------------------
+let categoriesRef = null, verifiedTokens = 8192;
+// Re-render a message at most every max(120 ms, 4x its last build time): a 32k-token reply stays responsive.
+function bump(m, now) {
+  const raw = Vue.toRaw(m), gap = Math.max(120, 4 * (raw._cost || 0));
+  if (now || !raw._last || performance.now() - raw._last > gap) { clearTimeout(raw._timer); raw._timer = null; raw._last = performance.now(); m.ver++; }
+  else if (!raw._timer) raw._timer = setTimeout(() => { raw._timer = null; raw._last = performance.now(); m.ver++; }, gap);
+}
+function tokenClass(s, r, fired, prov) {
+  let c = "t";
+  if (r.rule !== "off" && s > r.tau) c += " hot"; else if (s > 0.5) c += " warm";
+  if (prov) c += " prov"; if (fired) c += " fire";
+  return c;
+}
+function buildView(m, r) {
+  const rows = contentRows(m);
+  const fire = firstFire(rows.map((x) => x.l), r);
+  const text = guardText(m);
+  const cutChar = m.cut && m.verdict && m.verdict.fired ? m.verdict.char_end : null;
+  const pieces = []; let prev = 0;
+  rows.forEach((x, k) => { const a = Math.max(x.t.a, prev), b = x.t.b; if (b > a) { pieces.push({ a, b, k, s: score(x.l, r), prov: x.t.p }); prev = b; } });
+  if (prev < text.length) pieces.push({ a: prev, b: text.length, k: -1 });
+  const range = (lo, hi) => {
+    let html = "";
+    for (const p of pieces) {
+      const a = Math.max(lo, p.a), b = Math.min(hi, p.b); if (b <= a) continue;
+      const parts = cutChar != null && a < cutChar && b > cutChar ? [[a, cutChar], [cutChar, b]] : [[a, b]];
+      for (const [x, y] of parts) {
+        const seg = esc(text.slice(x, y));
+        if (cutChar != null && x >= cutChar) { html += `<span class="withheld">${seg}</span>`; continue; }
+        if (p.k < 0) { html += `<span class="pending">${seg}</span>`; continue; }
+        html += `<span class="${tokenClass(p.s, r, p.k === fire, p.prov)}" data-k="${p.k}">${seg}</span>`;
+        if (cutChar != null && y === cutChar) html += `<span class="cutmark">✂ 截断</span>`;
+      }
+    }
+    return html;
+  };
+  let think = "", body;
+  const live = m.status === "waiting" || m.status === "streaming";
+  if (m.role === "assistant") {
+    const R = (m.reasoning || "").length, sep = m.reasoning && m.content ? 2 : 0;
+    if (R) think = range(0, R);
+    body = range(R + sep, text.length) || (live ? '<span class="pending">…</span>' : "");
+  } else body = range(0, text.length) || '<span class="pending">（空提问）</span>';
+  const { badges, metas } = verdictParts(m, rows, r, fire);
+  return { rows, fire, think, body, badges, metas };
+}
+function catName(role, t) { const c = role === "user" ? t.cu : t.ca; return c && categoriesRef ? `${categoriesRef[role][c[0]]} ${fmt(c[1], 2)}` : ""; }
+function verdictParts(m, rows, r, fire) {
+  const badges = [], metas = [];
+  const v = m.verdict;
+  if (m.role === "user") {
+    if (m.status === "checking") badges.push({ theme: "default", text: "审核中…" });
+    else if (v) {
+      if (m.blocked) { badges.push({ theme: "danger", text: "✂ 提问被拦截" }); metas.push(`分数 ${fmt(v.score)} > τ，未调用模型`); }
+      else if (v.fired) { badges.push({ theme: "warning", text: "⚠ 会被拦截（只标记）" }); metas.push(`分数 ${fmt(v.score)}`); }
+      else { badges.push({ theme: "success", text: "✓ 提问通过" });
+        metas.push(r.rule === "endpoint" && rows.length ? `末位分数 ${fmt(score(rows[rows.length - 1].l, r))} · 审核 ${v.ms} ms` : `最高 ${fmt(v.max_score)} · 审核 ${v.ms} ms`); }
+    }
+  } else {
+    if (m.status === "waiting") badges.push({ theme: "default", text: "等待模型…" });
+    else if (m.status === "streaming") {
+      const lag = guardText(m).length - (rows.length ? rows[rows.length - 1].t.b : 0);
+      badges.push({ theme: "primary", text: `审核中 · 已审 ${rows.length} token · 未审 ${Math.max(0, lag)} 字` });
+    }
+    if (m.cut && v) { badges.push({ theme: "danger", text: `✂ 已截断于第 ${v.k + 1} 个 token` }); metas.push(`分数 ${fmt(v.score)} · 流开始后 ${v.at_ms} ms · 模型已给出 ${v.received_chars} 字，放出 ${v.char_end} 字`); }
+    else if (v && v.fired && v.action === "observe") { badges.push({ theme: "warning", text: `⚠ 当时的规则会在第 ${v.k + 1} 个 token 截断` }); metas.push(`分数 ${fmt(v.score)}` + (v.at_end ? " · 在消息末尾的暂定 token 上" : ` · 流开始后 ${v.at_ms} ms`)); }
+    else if (v && v.fired && v.at_end) { badges.push({ theme: "warning", text: "⚠ 末尾暂定 token 上命中" }); metas.push(`第 ${v.k + 1} 个 token · 分数 ${fmt(v.score)}`); }
+    else if (m.status === "done" && v && rows.length) { badges.push({ theme: "success", text: "✓ 放行" }); metas.push(`最高 ${fmt(v.max_score)} @ 第 ${v.max_k + 1} 个 token`); }
+    if (m.status === "stopped") badges.push({ theme: "default", text: "已手动停止" });
+    if (m.stats && m.stats.first_delta_ms != null) metas.push(`首字 ${m.stats.first_delta_ms} ms · 共 ${m.stats.total_ms} ms`);
+  }
+  const beyond = rows.findIndex((x) => x.t.i >= verifiedTokens);
+  if (beyond >= 0) metas.push(`从第 ${beyond + 1} 个 token 起超出审核模型验证过的 ${verifiedTokens} token 长度`);
+  if (m.status !== "checking" && m.status !== "waiting" && rows.length) {
+    const actual = m.role === "user" ? (v && v.fired ? v.k : -1) : (v && v.fired && !v.at_end ? v.k : -1);
+    if (fire !== actual || (m.status === "streaming" && fire >= 0)) {
+      const cat = fire >= 0 ? catName(m.role, rows[fire].t) : "";
+      metas.push(fire >= 0 ? `按当前规则：第 ${fire + 1} 个 token 命中（${fmt(score(rows[fire].l, r))}）${cat ? " · " + cat : ""}` : "按当前规则：不命中");
+    } else if (fire >= 0 && catName(m.role, rows[fire].t)) metas.push(catName(m.role, rows[fire].t));
+  }
+  return { badges, metas };
+}
+
+// ---- chart: per-token score on a logit axis ---------------------------------------------
+const TICKS = [0.001, 0.01, 0.1, 0.5, 0.9, 0.99, 0.999];
+const YLIM = 7.5;
+function drawChart(el, m, r) {
+  const rows = contentRows(m); const n = rows.length; if (!n || !el) return;
+  const scores = rows.map((x) => score(x.l, r));
+  const ema = r.rule === "ema" ? emaSeries(rows.map((x) => x.l), r) : null;
+  const fire = firstFire(rows.map((x) => x.l), r);
+  const W = Math.max(280, el.clientWidth || 600), H = m.role === "user" ? 96 : 136, L = 40, Rm = 52, T = 8, B = 18;
+  const x = (k) => L + (n === 1 ? (W - L - Rm) / 2 : (k / (n - 1)) * (W - L - Rm));
+  const y = (s) => { const v = Math.max(-YLIM, Math.min(YLIM, logit(s))); return T + (1 - (v + YLIM) / (2 * YLIM)) * (H - T - B); };
+  const step = Math.max(1, Math.ceil(n / Math.max(1, (W - L - Rm) * 1.5)));
+  const path = (arr, peak) => {
+    let d = "";
+    for (let k0 = 0; k0 < arr.length; k0 += step) {
+      let k = k0;
+      if (step > 1) { const k1 = Math.min(arr.length, k0 + step); if (peak) { for (let j = k0; j < k1; j++) if (arr[j] > arr[k]) k = j; } else k = k1 - 1; }
+      d += `${d ? "L" : "M"}${x(k).toFixed(1)},${y(arr[k]).toFixed(1)}`;
+    }
+    return d;
+  };
+  let svg = `<svg viewBox="0 0 ${W} ${H}" height="${H}" role="img" aria-label="逐 token 风险分数">`;
+  for (const t of TICKS) svg += `<line class="grid" x1="${L}" x2="${W - Rm}" y1="${y(t)}" y2="${y(t)}"/><text class="axis" x="${L - 6}" y="${y(t) + 3}" text-anchor="end">${t}</text>`;
+  if (r.rule !== "argmax2" && r.rule !== "off") svg += `<line class="tau" x1="${L}" x2="${W - Rm}" y1="${y(r.tau)}" y2="${y(r.tau)}"/><text class="axis" x="${W - Rm + 4}" y="${y(r.tau) + 3}">τ ${+r.tau.toFixed(4)}</text>`;
+  svg += `<text class="axis" x="${W - Rm}" y="${H - 4}" text-anchor="end">${n} token</text><text class="axis" x="${L}" y="${H - 4}">1</text>`;
+  if (n > 1) { svg += `<path class="s1" d="${path(scores, true)}"/>`; if (ema) svg += `<path class="s2" d="${path(ema, false)}"/>`; }
+  else svg += `<circle class="dot" cx="${x(0)}" cy="${y(scores[0])}" r="4"/>`;
+  if (fire >= 0) { const left = x(fire) > (L + W - Rm) / 2;
+    svg += `<line class="firel" x1="${x(fire)}" x2="${x(fire)}" y1="${T}" y2="${H - B}"/><text class="axis" x="${x(fire) + (left ? -4 : 4)}" y="${H - B - 4}" text-anchor="${left ? "end" : "start"}" style="fill:var(--hot-line)">命中 #${fire + 1}</text>`; }
+  svg += `<g class="hover" style="display:none"><line class="cross" y1="${T}" y2="${H - B}"/><circle class="dot" r="4"/></g>`;
+  svg += `<rect x="${L}" y="0" width="${W - L - Rm}" height="${H}" fill="transparent" class="hit"/></svg>`;
+  el.innerHTML = svg + `<div class="chart-legend"><span><i style="background:var(--series-1)"></i>逐 token ${r.score === "unsafe" ? "p(unsafe)" : "1−p(safe)"}（T=${r.T}，对数几率刻度）</span>${ema ? `<span><i style="background:var(--series-2)"></i>滑动平均 α=${r.alpha}</span>` : ""}</div>`;
+  const hit = el.querySelector(".hit"), g = el.querySelector(".hover");
+  const show = (k, ev) => {
+    g.style.display = ""; g.querySelector("line").setAttribute("x1", x(k)); g.querySelector("line").setAttribute("x2", x(k));
+    g.querySelector("circle").setAttribute("cx", x(k)); g.querySelector("circle").setAttribute("cy", y(scores[k]));
+    highlight(el.closest(".msg"), k); showTip(m, rows, k, r, ev.clientX, ev.clientY, ema);
+  };
+  hit.addEventListener("mousemove", (ev) => { const b = hit.getBoundingClientRect(); const f = (ev.clientX - b.left) / b.width; show(Math.max(0, Math.min(n - 1, Math.round(f * (n - 1)))), ev); });
+  hit.addEventListener("mouseleave", () => { g.style.display = "none"; hideTip(); highlight(el.closest(".msg"), -1); });
+}
+const chartRedraws = new Set();
+let chartRaf = 0;
+function scheduleCharts() { if (!chartRaf) chartRaf = requestAnimationFrame(() => { chartRaf = 0; chartRedraws.forEach((f) => f()); }); }
+function highlight(msgEl, k) {
+  if (!msgEl) return;
+  msgEl.querySelectorAll(".t.hl").forEach((e) => e.classList.remove("hl"));
+  if (k >= 0) { const e = msgEl.querySelector(`.t[data-k="${k}"]`); if (e) e.classList.add("hl"); }
+}
+function showTip(m, rows, k, r, cx, cy, ema) {
+  const x = rows[k], text = guardText(m), p = probs(x.l, 1), pt = probs(x.l, r.T);
+  const tokenText = text.slice(x.t.a, x.t.b) || "（与相邻 token 共用一个字）";
+  const cat = catName(m.role, x.t);
+  const el = document.getElementById("tip");
+  el.innerHTML = `<div>第 ${k + 1} 个 token${x.t.p ? "（暂定）" : ""} <span class="tk">${esc(tokenText)}</span></div>
+    <table><tr><td>safe</td><td class="v">${fmt(p[0])}</td><td>unsafe</td><td class="v">${fmt(p[1])}</td></tr>
+    <tr><td>有争议</td><td class="v">${fmt(p[2])}</td><td>分数(T=${r.T})</td><td class="v">${fmt(r.score === "unsafe" ? pt[1] : 1 - pt[0])}</td></tr>
+    ${ema ? `<tr><td>滑动平均</td><td class="v">${fmt(ema[k])}</td><td>τ</td><td class="v">${r.tau}</td></tr>` : ""}</table>
+    ${cat ? `<div class="note">类别头（未验收）：${esc(cat)}</div>` : ""}`;
+  el.style.display = "block";
+  const w = el.offsetWidth, h = el.offsetHeight;
+  el.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, cx + 14)) + "px";
+  el.style.top = (cy + h + 24 > window.innerHeight ? cy - h - 12 : cy + 16) + "px";
+}
+function hideTip() { document.getElementById("tip").style.display = "none"; }
+
+// ---- app ------------------------------------------------------------------------------
+const DEFAULTS = { mode: "llm", action: "cut", replayChars: 2, replayInterval: 40, aPreset: "ema01_t22", uPreset: "whole_zh", aRule: null, uRule: null, modelSha: null };
+function loadCfg() {
+  const saved = safeStore.get("guardDemo.settings", {}) || {};
+  const cfg = {};
+  for (const k of Object.keys(DEFAULTS)) cfg[k] = k in saved ? saved[k] : DEFAULTS[k];
+  cfg.replayChars = numOrUndef(Number(cfg.replayChars)) || 2;
+  const iv = numOrUndef(Number(cfg.replayInterval)); cfg.replayInterval = iv == null ? 40 : iv;
+  if (!validRule(cfg.aRule)) cfg.aRule = null;
+  if (!validRule(cfg.uRule)) cfg.uRule = null;
+  return cfg;
+}
+
+const ChatMessage = {
+  template: "#tpl-message",
+  props: ["m", "idx", "arule", "urule", "action"],
+  setup(props) {
+    const rule = computed(() => (props.m.role === "user" ? props.urule : props.arule));
+    const view = computed(() => {
+      props.m.ver; const raw = Vue.toRaw(props.m), t0 = performance.now();
+      const v = buildView(raw, rule.value); raw._cost = performance.now() - t0; return v; });
+    const who = computed(() => (props.m.role === "user" ? "提问" : (props.m.mode === "replay" ? "回答（回放）" : "回答")));
+    return { rule, view, who };
+  },
+};
+const GuardChart = {
+  template: '<div class="chart" ref="el"></div>',
+  props: ["m", "rule", "ver"],
+  setup(props) {
+    const el = ref(null);
+    const draw = () => drawChart(el.value, props.m, props.rule);
+    Vue.onMounted(() => { chartRedraws.add(draw); draw(); });
+    Vue.onBeforeUnmount(() => chartRedraws.delete(draw));
+    watch(() => [props.ver, props.rule && JSON.stringify(props.rule)], () => nextTick(draw));
+    return { el };
+  },
+};
+
+const app = createApp({
+  setup() {
+    const cfg = reactive(loadCfg());
+    const info = ref(null);
+    const messages = reactive([]);
+    const state = reactive({ busy: false, session: uid(), controller: null });
+    const input = ref("");
+    const replay = reactive({ reasoning: "", content: "" });
+    const drawer = ref(false);
+    const chatEl = ref(null);
+
+    const builtin = computed(() => (info.value && info.value.builtin) || {});
+    const builtinOk = computed(() => !!builtin.value.available);
+    const presets = (role) => (info.value && info.value.presets ? info.value.presets[role] : []);
+    const presetOptions = (role) => presets(role).map((p) => ({ label: p.name, value: p.id })).concat([{ label: "自定义", value: "custom" }]);
+    const presetOf = (w) => presets(w === "a" ? "assistant" : "user").find((p) => p.id === (w === "a" ? cfg.aPreset : cfg.uPreset));
+    const describe = (r) => { if (!r) return "—"; const names = { ema: `滑动平均 α=${r.alpha}`, threshold: `连续 ${r.k} 次`, argmax2: "连续两次 argmax", endpoint: "只看末位", off: "不审" };
+      return `${names[r.rule]} · ${r.score === "unsafe" ? "p(unsafe)" : "1−p(safe)"} · T=${r.T} · τ=${r.tau}`; };
+    const presetName = (w) => { const p = presetOf(w); return p ? p.name : "自定义：" + describe(w === "a" ? cfg.aRule : cfg.uRule); };
+    const presetNote = (w) => { const p = presetOf(w); return p ? p.note : "自定义规则，未校准"; };
+    const pick = (p) => ({ rule: p.rule, score: p.score, T: p.T, tau: p.tau, k: p.k, alpha: p.alpha });
+    function applyPreset(w) { const p = presetOf(w); if (!p) return; if (w === "a") cfg.aRule = pick(p); else cfg.uRule = pick(p); }
+    const sameRule = (a, b) => !!(a && b) && ["rule", "score", "T", "tau", "k", "alpha"].every((k) => (typeof a[k] === "number" ? Math.abs(a[k] - b[k]) < 1e-6 : a[k] === b[k]));
+    // Components may emit change on mount; name a preset whenever the parameters still equal one.
+    function markCustom(w) { nextTick(() => {
+      const r = w === "a" ? cfg.aRule : cfg.uRule; const match = presets(w === "a" ? "assistant" : "user").find((p) => sameRule(pick(p), r));
+      if (w === "a") cfg.aPreset = match ? match.id : "custom"; else cfg.uPreset = match ? match.id : "custom"; }); }
+    const ready = computed(() => !!(info.value && info.value.ready));
+    const canSend = computed(() => ready.value && !state.busy && (cfg.mode === "replay" || builtinOk.value));
+    const hint = computed(() => {
+      if (cfg.mode === "replay") return "回放模式：上面贴回答，这里写对应的提问";
+      return builtinOk.value ? `对话模型 ${builtin.value.model}` : "内置模型还没配置 key，暂时只能用粘贴文本回放";
+    });
+
+    watch(cfg, () => safeStore.set("guardDemo.settings", cfg), { deep: true });
+
+    async function loadInfo() {
+      try {
+        const data = await (await fetch("api/info", { cache: "no-store" })).json();
+        const first = !info.value || !info.value.presets || (!info.value.ready && data.ready);
+        info.value = data; categoriesRef = data.categories; verifiedTokens = data.verified_tokens || 8192;
+        if (first && data.presets) {
+          if (data.ready && data.checkpoint_sha256 && cfg.modelSha !== data.checkpoint_sha256) {
+            // another model: rules tuned for the previous one do not carry over
+            cfg.aRule = null; cfg.uRule = null; cfg.aPreset = data.presets.assistant[0].id; cfg.uPreset = data.presets.user[0].id;
+            cfg.modelSha = data.checkpoint_sha256;
+          }
+          if (!cfg.aRule) { const p = data.presets.assistant.find((x) => x.id === cfg.aPreset) || data.presets.assistant[0]; cfg.aPreset = p.id; cfg.aRule = pick(p); }
+          if (!cfg.uRule) { const p = data.presets.user.find((x) => x.id === cfg.uPreset) || data.presets.user[0]; cfg.uPreset = p.id; cfg.uRule = pick(p); }
+          markCustom("a"); markCustom("u");
+        }
+        setTimeout(loadInfo, data.ready ? 30000 : 3000);
+      } catch (e) {
+        info.value = { error: "连不上服务：" + e };
+        setTimeout(loadInfo, 5000);
+      }
+    }
+    async function refreshInfo() { try { const d = await (await fetch("api/info", { cache: "no-store" })).json(); info.value = d; } catch (e) {} }
+
+    let stick = true;   // follow the stream unless the reader scrolled up
+    function onScroll() { const el = chatEl.value; if (el) stick = el.scrollHeight - el.scrollTop - el.clientHeight < 80; }
+    function scrollBottom(force) {
+      if (force) stick = true;
+      nextTick(() => { const el = chatEl.value; if (el && stick) el.scrollTop = el.scrollHeight; });
+    }
+    function applyTokens(payload, map) {
+      const byMsg = new Map();
+      for (const t of payload.tokens) { const fm = map[t.m]; if (fm == null) continue; if (!byMsg.has(fm)) byMsg.set(fm, []); byMsg.get(fm).push(t); }
+      for (let j = 0; j < map.length; j++) {
+        const m = messages[map[j]]; if (!m || m.frozen) continue;
+        const kept = m.tokens.filter((t) => t.i < payload.from);
+        const add = byMsg.get(map[j]) || [];
+        if (kept.length === m.tokens.length && !add.length) continue;
+        m.tokens = markRaw(kept.concat(add)); bump(m);
+      }
+    }
+    function newMessage(role, extra) { return Object.assign({ id: uid(), role, content: "", reasoning: "", tokens: markRaw([]), ver: 0, status: "done" }, extra); }
+
+    async function send() {
+      if (!canSend.value) return;
+      const isReplay = cfg.mode === "replay";
+      const text = input.value;
+      if (!isReplay && !text.trim()) return;
+      if (isReplay && !replay.content && !replay.reasoning) { MessagePlugin.warning("先贴上要回放的回答"); return; }
+      messages.push(newMessage("user", { content: text, status: "checking" }));
+      const user = messages[messages.length - 1];
+      const sent = [], map = [];
+      messages.forEach((m, i) => { if (!m.excluded) { sent.push(released(m)); map.push(i); } });
+      messages.push(newMessage("assistant", { status: "waiting", mode: cfg.mode }));
+      const asst = messages[messages.length - 1]; map.push(messages.length - 1);
+      const body = { session_id: state.session, messages: sent, mode: cfg.mode,
+        guard: { action: cfg.action, assistant_rule: cfg.aRule, user_rule: cfg.uRule } };
+      if (isReplay) body.replay = { reasoning: replay.reasoning, content: replay.content, chars: cfg.replayChars || 2, interval_ms: cfg.replayInterval == null ? 40 : cfg.replayInterval };
+      else body.llm = { use_builtin: true };
+      input.value = "";
+      state.busy = true; drawer.value = false; scrollBottom(true);
+      state.controller = new AbortController();
+      try {
+        await streamChat(body, (ev, d) => onEvent(ev, d, user, asst, map), state.controller.signal);
+      } catch (e) {
+        if (e.name === "AbortError") asst.status = "stopped";
+        else (asst.status === "waiting" && user.status === "checking" ? user : asst).error = String(e.message || e);
+      }
+      if (user.status === "checking") user.status = "done";
+      if (!["done", "blocked"].includes(asst.status)) asst.status = asst.status === "stopped" ? "stopped" : "done";
+      user.frozen = true; asst.frozen = true;
+      if (asst.status === "blocked") messages.splice(messages.indexOf(asst), 1);
+      else if (!asst.reasoning && !asst.content) { asst.excluded = true; user.excluded = true; }
+      bump(user, true); if (messages.includes(asst)) bump(asst, true);
+      state.busy = false; scrollBottom(); setTimeout(refreshInfo, 400);
+    }
+    function onEvent(ev, d, user, asst, map) {
+      if (ev === "tokens") applyTokens(d, map);
+      else if (ev === "user_verdict") {
+        user.verdict = d; user.status = "done";
+        if (d.fired && cfg.action === "cut") { user.blocked = true; user.excluded = true; asst.status = "blocked"; }
+        else asst.status = "streaming";
+        bump(user, true); bump(asst, true);
+      } else if (ev === "delta") { asst.reasoning += d.reasoning || ""; asst.content += d.content || ""; asst.status = "streaming"; bump(asst); }
+      else if (ev === "assistant_verdict") { asst.verdict = d; if (d.fired && d.action === "cut" && !d.at_end) asst.cut = true; bump(asst, true); }
+      else if (ev === "error") { const t = asst.status === "blocked" ? user : asst; t.error = d.message; bump(t, true); }
+      else if (ev === "done") { asst.stats = d; if (asst.status !== "blocked") asst.status = "done"; bump(asst, true); }
+      scrollBottom();
+    }
+    async function streamChat(body, handle, signal) {
+      const res = await fetch("api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body), signal });
+      if (!res.ok || !(res.headers.get("content-type") || "").includes("text/event-stream")) {
+        let msg = `HTTP ${res.status}`; try { msg = (await res.json()).error || msg; } catch (e) {}
+        throw new Error(msg);
+      }
+      const reader = res.body.getReader(), dec = new TextDecoder(); let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read(); if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let cut;
+        while ((cut = buf.indexOf("\n\n")) >= 0) {
+          const block = buf.slice(0, cut); buf = buf.slice(cut + 2);
+          let ev = "message", data = "";
+          for (const line of block.split("\n")) { if (line.startsWith("event:")) ev = line.slice(6).trim(); else if (line.startsWith("data:")) data += line.slice(5).trim(); }
+          if (data) handle(ev, JSON.parse(data));
+        }
+      }
+    }
+    function stop() { if (state.controller) state.controller.abort(); }
+    function onKey(value, ctx) { const e = ctx && ctx.e; if (e && e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } }
+    function newChat() {
+      if (state.busy) return;
+      fetch("api/reset", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ session_id: state.session }) }).catch(() => {});
+      state.session = uid(); messages.splice(0, messages.length);
+    }
+    function exportJson() {
+      const data = { exported_at: new Date().toISOString(), checkpoint_sha256: info.value && info.value.checkpoint_sha256,
+        chat_model: builtin.value.model, assistant_rule: cfg.aRule, user_rule: cfg.uRule, action: cfg.action,
+        messages: messages.map((m) => ({ role: m.role, content: m.content, reasoning: m.reasoning, verdict: m.verdict, cut: !!m.cut, blocked: !!m.blocked,
+          tokens: m.tokens.map((t) => ({ i: t.i, a: t.a, b: t.b, header: !!t.h, provisional: !!t.p, logits_user: t.lu, logits_assistant: t.la })) })) };
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: "application/json" }));
+      const a = document.createElement("a"); a.href = url; a.download = `guard-session-${Date.now()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    function onHover(ev) {
+      const t = ev.target.closest && ev.target.closest(".t[data-k]"); if (!t) return;
+      const msgEl = t.closest(".msg"); const m = messages[+msgEl.dataset.i]; if (!m) return;
+      const r = m.role === "user" ? cfg.uRule : cfg.aRule; const rows = contentRows(m); const k = +t.dataset.k;
+      showTip(m, rows, k, r, ev.clientX, ev.clientY, r.rule === "ema" ? emaSeries(rows.map((x) => x.l), r) : null);
+    }
+    function onOut(ev) { if (ev.target.closest && ev.target.closest(".t[data-k]")) hideTip(); }
+
+    window.addEventListener("resize", scheduleCharts);
+    loadInfo();
+    return { cfg, info, messages, input, replay, drawer, chatEl, builtin, builtinOk, presetOptions, presetName, presetNote,
+      applyPreset, markCustom, canSend, hint, send, stop, onKey, newChat, exportJson, onHover, onOut, onScroll, fmt,
+      busy: computed(() => state.busy),
+      scoreOptions: [{ label: "p(unsafe)", value: "unsafe" }, { label: "1 − p(safe)", value: "cut" }],
+      ruleOptions: [{ label: "滑动平均", value: "ema" }, { label: "连续 k 次超阈值", value: "threshold" }, { label: "连续两次 argmax", value: "argmax2" }, { label: "只看末位", value: "endpoint" }, { label: "不审", value: "off" }] };
+  },
+});
+app.component("chat-message", ChatMessage);
+app.component("guard-chart", GuardChart);
+app.use(TDesign.default);
+app.mount("#app");
+</script>
+</body>
+</html>

@@ -72,11 +72,15 @@ guard.reset()  # Clear every slot before reassigning the whole batch.
 
 See [examples/stream.py](examples/stream.py) for serialization and target-message boundaries. Pass only stable token IDs. Text streaming integrations must handle tokenizer-boundary changes before committing tokens. `step` returns per-token scores; callers apply the documented prompt-end or response-max decision rule.
 
+## Interactive demo
+
+The [web demo](examples/demo/README.md) supports live responses, text replay, token scores and risk curves. Concurrent requests share a bounded GPU queue and are processed in batches of up to 16, with 64-token scheduling ticks and immutable checkpoints for text rollback. [Service benchmark](examples/demo/BENCHMARK.md).
+
 ## Release contents
 
 - Complete classifier weights and tokenizer assets on Hugging Face.
 - Reference complete-message inference and the CUDA Graph / Triton streaming engine.
-- Aggregate evaluation results, technical report and usage examples.
+- Aggregate evaluation results, technical report, usage examples and the batched web demo.
 
 Training corpora, raw evaluation examples, private policy dictionaries and deployment infrastructure are not distributed. Category outputs are not a validated release feature. See the model card for policy scope and limitations.
 
