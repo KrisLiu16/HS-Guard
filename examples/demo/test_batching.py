@@ -120,5 +120,81 @@ class SchedulerTests(unittest.TestCase):
             BatchScheduler(fail)
 
 
+class DeadlineTests(unittest.TestCase):
+    def test_expired_queued_request_never_starts(self):
+        import time
+        entered, release = threading.Event(), threading.Event()
+        backend = Backend()
+        step = backend.step
+        def blocked(batch):
+            entered.set()
+            release.wait(2)
+            return step(batch)
+        backend.step = blocked
+        scheduler = BatchScheduler(lambda: backend, slots=1, wait_ms=0)
+        try:
+            first = scheduler.submit([1])
+            self.assertTrue(entered.wait(2))
+            expired = scheduler.submit([999], timeout=.01)
+            time.sleep(.02)
+            release.set()
+            first.result(2)
+            with self.assertRaises(TimeoutError):
+                expired.result(2)
+            self.assertEqual(scheduler.submit([3]).result(2)[0], 3)
+            self.assertFalse(any(999 in ids for batch in backend.batches for _, ids in batch))
+            self.assertEqual(scheduler.stats()['expired'], 1)
+        finally:
+            release.set()
+            scheduler.close()
+
+    def test_active_deadline_stall_and_bounded_close(self):
+        import time
+        entered, release = threading.Event(), threading.Event()
+        backend = Backend()
+        step = backend.step
+        def blocked(batch):
+            entered.set()
+            release.wait(2)
+            return step(batch)
+        backend.step = blocked
+        scheduler = BatchScheduler(lambda: backend, slots=1, wait_ms=0, stall_seconds=.01)
+        try:
+            pending = scheduler.submit([1, 2], timeout=.01)
+            self.assertTrue(entered.wait(2))
+            time.sleep(.02)
+            self.assertTrue(scheduler.stats()['stalled'])
+            self.assertFalse(scheduler.close(timeout=.01))
+            release.set()
+            with self.assertRaises(TimeoutError):
+                pending.result(2)
+            self.assertTrue(scheduler.close(timeout=2))
+            self.assertEqual(scheduler.stats()['queued_tokens'], 0)
+        finally:
+            release.set()
+            scheduler.close()
+
+    def test_invalid_input_and_token_budget(self):
+        entered, release = threading.Event(), threading.Event()
+        backend = Backend()
+        step = backend.step
+        def blocked(batch):
+            entered.set()
+            release.wait(2)
+            return step(batch)
+        backend.step = blocked
+        scheduler = BatchScheduler(lambda: backend, slots=1, max_tokens=4, token_capacity=4)
+        try:
+            for ids in ([], [1]*5, [-1], [1.5], [True]):
+                with self.assertRaises(ValueError): scheduler.submit(ids)
+            f = scheduler.submit([1]*4)
+            self.assertTrue(entered.wait(2))
+            with self.assertRaisesRegex(RuntimeError, 'full'): scheduler.submit([2])
+            release.set()
+            f.result(2)
+        finally:
+            release.set()
+            scheduler.close()
+
 if __name__ == '__main__':
     unittest.main()

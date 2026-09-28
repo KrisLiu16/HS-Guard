@@ -5,6 +5,7 @@ import numpy as np
 import threading
 from batching import BatchScheduler
 import time
+from concurrent.futures import TimeoutError as FutureTimeout
 
 
 class GuardRuntime:
@@ -22,7 +23,10 @@ class GuardRuntime:
         self.timings = collections.deque(maxlen=2000)
         self.timing_lock = threading.Lock()
         slots = int(os.environ.get('GUARD_BATCH_SLOTS', '16'))
-        wait_ms = float(os.environ.get('GUARD_BATCH_WAIT_MS', '1'))
+        self.request_timeout = float(os.environ.get('GUARD_GPU_TIMEOUT_SECONDS', '30'))
+        if not np.isfinite(self.request_timeout) or self.request_timeout <= 0:
+            raise ValueError('GUARD_GPU_TIMEOUT_SECONDS must be positive and finite')
+        wait_ms = float(os.environ.get('GUARD_BATCH_WAIT_MS', '0.25'))
         if not 1 <= slots <= 16:
             raise ValueError('GUARD_BATCH_SLOTS must be between 1 and 16')
         torch.cuda.synchronize()
@@ -36,8 +40,13 @@ class GuardRuntime:
 
     def forward(self, ids, cache):
         started = time.perf_counter()
-        snapshot, parts = self.scheduler.submit(ids, cache).result()
-        probs = np.concatenate(parts, axis=1)
+        future = self.scheduler.submit(ids, cache, timeout=self.request_timeout)
+        try:
+            snapshot, parts = future.result(timeout=self.request_timeout + 1)
+        except FutureTimeout:
+            future.cancel()
+            raise TimeoutError('GPU request timed out') from None
+        probs = parts[0] if len(parts) == 1 else np.concatenate(parts, axis=1)
         logs = np.log(np.maximum(probs, 1e-30)).tolist()
         records = [{'lu': user, 'la': assistant} for user, assistant in zip(*logs)]
         with self.timing_lock:
@@ -45,10 +54,11 @@ class GuardRuntime:
         return snapshot, records
 
     def healthy(self):
-        return not self.scheduler.stats()['failed']
+        state = self.scheduler.stats()
+        return not (state['failed'] or state['stalled'] or state['closed'])
 
-    def close(self):
-        self.scheduler.close()
+    def close(self, timeout=10):
+        return self.scheduler.close(timeout)
 
     def clone(self, cache):
         # Snapshots are immutable; restore copies into the engine's workspace.
@@ -63,7 +73,9 @@ class GuardRuntime:
         pick = lambda q: round(values[min(len(values) - 1, int(q * len(values)))], 2)
         return {'ticks': len(values), 'p50_ms': pick(.5), 'p95_ms': pick(.95),
                 'tokens_per_tick': round(sum(n for n, _ in samples) / len(samples), 1),
-                'scheduler': self.scheduler.stats()}
+                'scheduler': self.scheduler.stats(),
+                'gpu_allocated_mib': round(self.torch.cuda.memory_allocated() / 2**20, 1),
+                'gpu_reserved_mib': round(self.torch.cuda.memory_reserved() / 2**20, 1)}
 
 
 class _GPUBackend:

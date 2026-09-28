@@ -20,7 +20,7 @@ A separate HTTP/SSE replay test ran all 64 cases through 16 concurrent sessions,
 
 ```bash
 python benchmarks/run.py --mode serial --bundle ./models/HS-Guard-v10 --output serial.json
-python benchmarks/run.py --mode batch --bundle ./models/HS-Guard-v10 --output batch.json
+GUARD_BATCH_WAIT_MS=1 python benchmarks/run.py --mode batch --bundle ./models/HS-Guard-v10 --output batch.json
 ```
 
 The benchmark uses a synthetic benign token stream. The included serial runtime is the original demo adapter retained for comparison. The 64-case regression data are not distributed with this repository.

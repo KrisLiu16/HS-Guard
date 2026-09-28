@@ -74,7 +74,7 @@ See [examples/stream.py](examples/stream.py) for serialization and target-messag
 
 ## Interactive demo
 
-The [web demo](examples/demo/README.md) supports live responses, text replay, token scores and risk curves. Concurrent requests share a bounded GPU queue and are processed in batches of up to 16, with 64-token scheduling ticks and immutable checkpoints for text rollback. [Service benchmark](examples/demo/BENCHMARK.md).
+The [web demo](examples/demo/README.md) supports live responses, text replay, token scores and risk curves. Concurrent requests share a bounded GPU queue and are processed in batches of up to 16, with 64-token scheduling ticks and immutable checkpoints for text rollback. [Service validation](examples/demo/HARDENING.md) · [Deployment guide](examples/demo/OPERATIONS.md).
 
 ## Release contents
 

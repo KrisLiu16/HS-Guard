@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import base64
+import hmac
+import signal
 import collections
 import ipaddress
 import json
@@ -13,7 +16,8 @@ import sys
 import threading
 import time
 import traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from http.server import BaseHTTPRequestHandler
+from service_limits import SessionStore, SessionBusy, StreamQueue, LimitedHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -27,6 +31,12 @@ MAX_SESSIONS = 64
 SESSION_IDLE_SECONDS = 3600
 MAX_ACTIVE_CHATS = 16
 SNAPSHOTS = 8
+ACCESS_TOKEN = os.environ.get("GUARD_ACCESS_TOKEN", "")
+MAX_CHAT_SECONDS = 1800
+MAX_OUTPUT_CHARS = 196608
+DRAIN_SECONDS = 30
+MAX_BODY_BYTES = 4 * 1024 * 1024
+SHUTDOWN = threading.Event()
 # Custom model URLs may not target private networks (SSRF).
 # Hosts listed here (comma-separated) may resolve to private addresses, e.g. an internal model gateway.
 ALLOWED_PRIVATE_HOSTS = {h.strip().lower() for h in os.environ.get("GUARD_ALLOW_PRIVATE_HOSTS", "").split(",") if h.strip()}
@@ -36,8 +46,10 @@ BUILTIN = {"label": os.environ.get("GUARD_BUILTIN_LABEL", ""), "base_url": os.en
            "api_key": os.environ.get("GUARD_BUILTIN_API_KEY", "").strip()}
 BUILTIN_MAX_TOKENS = int(os.environ.get("GUARD_BUILTIN_MAX_TOKENS", "4096"))
 # Visitors' own endpoints (and the SSRF surface that comes with them) are off unless explicitly enabled.
+CUSTOM_MODEL_ORIGINS = {u.strip().rstrip("/") for u in os.environ.get("GUARD_CUSTOM_MODEL_ORIGINS", "").split(",") if u.strip()}
 ALLOW_CUSTOM_MODEL = os.environ.get("GUARD_ALLOW_CUSTOM_MODEL", "") == "1"
-PROTECTED_BODY_KEYS = {"model", "messages", "input", "stream", "instructions", "system"}
+PROTECTED_BODY_KEYS = {"model", "messages", "input", "stream", "instructions", "system",
+                       "max_tokens", "max_output_tokens", "max_completion_tokens", "n"}
 STATIC_TYPES = {".js": "application/javascript; charset=utf-8", ".css": "text/css; charset=utf-8"}
 STATIC_DIR = HERE / "static"
 ROLES = ("user", "assistant")
@@ -270,26 +282,6 @@ class RuleTracker:
                 self.fired_k = k
 
 
-class SessionStore:
-    def __init__(self, runtime):
-        self.rt, self.lock, self.sessions = runtime, threading.Lock(), collections.OrderedDict()
-
-    def get(self, key):
-        with self.lock:
-            session = self.sessions.pop(key, None) or GuardSession(self.rt)
-            self.sessions[key] = session
-            idle = [k for k, s in self.sessions.items() if time.time() - s.touched > SESSION_IDLE_SECONDS]
-            for k in idle:
-                self.sessions.pop(k)
-            while len(self.sessions) > MAX_SESSIONS:
-                self.sessions.popitem(last=False)
-            return session
-
-    def drop(self, key):
-        with self.lock:
-            self.sessions.pop(key, None)
-
-
 # ---- upstream readers ------------------------------------------------------------------
 
 def public_address(address):
@@ -304,6 +296,11 @@ def check_model_url(url):
     parts = urlsplit(url)
     if parts.scheme not in ("http", "https") or not parts.hostname:
         raise ValueError("Base URL 需要以 http:// 或 https:// 开头")
+    if parts.username or parts.password or parts.fragment:
+        raise ValueError('model URL may not contain credentials or fragments')
+    origin = f'{parts.scheme}://{parts.netloc}'
+    if origin not in CUSTOM_MODEL_ORIGINS:
+        raise ValueError('model origin is not in GUARD_CUSTOM_MODEL_ORIGINS')
     host = parts.hostname.lower()
     if host in ALLOWED_PRIVATE_HOSTS:
         return host
@@ -337,7 +334,7 @@ def read_llm(config, history, out, stop):
             if not builtin_available():
                 raise ValueError("服务端还没有配置内置模型的 key")
             requested = config.get("max_tokens")
-            limit = min(int(requested), BUILTIN_MAX_TOKENS) if requested not in (None, "") else BUILTIN_MAX_TOKENS
+            limit = max(1, min(int(requested), BUILTIN_MAX_TOKENS)) if requested not in (None, "") else BUILTIN_MAX_TOKENS
             config = {**config, **{k: BUILTIN[k] for k in ("base_url", "model", "protocol", "api_key")}, "max_tokens": limit}
         elif not ALLOW_CUSTOM_MODEL:
             raise ValueError("这个服务只开放内置模型")
@@ -369,12 +366,16 @@ def read_llm(config, history, out, stop):
         if not isinstance(extra, dict):
             raise ValueError("额外参数需要是 JSON 对象")
         body.update({k: v for k, v in extra.items() if k not in PROTECTED_BODY_KEYS})
+        output_key = 'max_output_tokens' if protocol == 'responses' else 'max_tokens'
+        body[output_key] = max(1, min(int(body.get(output_key, BUILTIN_MAX_TOKENS)), BUILTIN_MAX_TOKENS))
         headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
         if protocol == "anthropic_messages":
             headers["anthropic-version"] = "2023-06-01"
+            if config.get("api_key"):
+                headers["x-api-key"] = str(config["api_key"]).strip()
         if config.get("api_key"):
             headers["Authorization"] = "Bearer " + str(config["api_key"]).strip()
-        timeout = httpx.Timeout(connect=20.0, read=180.0, write=30.0, pool=20.0)
+        timeout = httpx.Timeout(connect=20.0, read=30.0, write=30.0, pool=20.0)
         with httpx.Client(timeout=timeout, follow_redirects=False, trust_env=False) as client, \
                 client.stream("POST", url, json=body, headers=headers) as response:
             # re-check the address actually connected to (DNS may have changed since check_model_url)
@@ -384,8 +385,7 @@ def read_llm(config, history, out, stop):
                 out.put(("error", f"模型地址 {host} 实际连到了内网或无法确认的地址，已中止"))
                 return
             if response.status_code != 200:
-                detail = response.read()[:600].decode("utf-8", "replace")
-                out.put(("error", f"模型接口返回 HTTP {response.status_code}：{detail}"))
+                out.put(("error", f"模型接口返回 HTTP {response.status_code}"))
                 return
             for line in response.iter_lines():
                 if stop.is_set():
@@ -402,8 +402,7 @@ def read_llm(config, history, out, stop):
                 if not isinstance(chunk, dict):
                     continue
                 if chunk.get("error") or chunk.get("type") in ("error", "response.failed"):
-                    detail = chunk.get("error") or (chunk.get("response") or {}).get("error") or chunk
-                    out.put(("error", "模型接口报错：" + json.dumps(detail, ensure_ascii=False)[:600]))
+                    out.put(("error", "上游模型流返回错误"))
                     return
                 if protocol == "anthropic_messages":
                     kind = chunk.get("type", "")
@@ -438,8 +437,8 @@ def read_llm(config, history, out, stop):
                         out.put(("content", delta["content"]))
                     if choice.get("finish_reason"):
                         out.put(("finish", str(choice["finish_reason"])))
-    except Exception as error:  # the message never contains the API key (httpx omits headers)
-        out.put(("error", f"{type(error).__name__}: {error}"))
+    except Exception as error:
+        out.put(("error", f"上游请求失败：{type(error).__name__}"))
     finally:
         out.put(("end", None))
 
@@ -454,8 +453,11 @@ def read_replay(replay, out, stop):
                 if stop.is_set():
                     return
                 out.put((kind, text[start:start + size]))
-                time.sleep(delay)
+                if stop.wait(delay):
+                    return
         out.put(("finish", "stop"))
+    except Exception as error:
+        out.put(("error", str(error)))
     finally:
         out.put(("end", None))
 
@@ -481,11 +483,16 @@ def load_model(bundle):
         if not check["tokenizer_match"] or check["stream_positions"] != check["tokens"] or check["max_prob_diff_stream_vs_whole"] > .05:
             raise RuntimeError(f"Streaming self-check failed: {check}")
         State.selfcheck = check
-        State.store = SessionStore(runtime)
+        State.store = SessionStore(lambda: GuardSession(runtime), MAX_SESSIONS, SESSION_IDLE_SECONDS)
         State.loaded_at = time.time()
+        if SHUTDOWN.is_set():
+            runtime.close()
+            return
         State.runtime = runtime
         print("model ready", json.dumps(State.selfcheck), flush=True)
     except Exception as error:
+        if "runtime" in locals():
+            runtime.close()
         State.error = f"{type(error).__name__}: {error}"
         traceback.print_exc()
 
@@ -517,8 +524,40 @@ def selfcheck(runtime):
             "max_prob_diff_stream_vs_whole": round(diff, 5), "stream_seconds": round(seconds, 2)}
 
 
+def ready():
+    return not SHUTDOWN.is_set() and State.runtime is not None and State.runtime.healthy()
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = "GuardDemo/1"
+
+    def authorized(self):
+        if not ACCESS_TOKEN:
+            return True
+        header = self.headers.get('Authorization', '')
+        credential = ''
+        if header.startswith('Bearer '):
+            credential = header[7:]
+        elif header.startswith('Basic '):
+            try:
+                user, credential = base64.b64decode(header[6:], validate=True).decode().split(':', 1)
+                if user != 'guard':
+                    credential = ''
+            except (ValueError, UnicodeError):
+                credential = ''
+        if hmac.compare_digest(credential.encode(), ACCESS_TOKEN.encode()):
+            return True
+        self.send_response(401)
+        self.send_header('WWW-Authenticate', 'Basic realm="HS-Guard", charset="UTF-8"')
+        self.send_header('Content-Length', '0')
+        self.end_headers()
+        return False
+
+    def end_headers(self):
+        self.send_header('X-Content-Type-Options', 'nosniff')
+        self.send_header('X-Frame-Options', 'DENY')
+        self.send_header('Referrer-Policy', 'no-referrer')
+        super().end_headers()
 
     def log_message(self, fmt, *args):
         sys.stderr.write("%s %s\n" % (time.strftime("%H:%M:%S"), fmt % args))
@@ -533,12 +572,29 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def _body(self):
-        length = int(self.headers.get("Content-Length") or 0)
-        if length > 4 * 1024 * 1024:
-            raise ValueError("request too large")
-        return json.loads(self.rfile.read(length) or b"{}")
+        if self.headers.get('Transfer-Encoding') or len(self.headers.get_all('Content-Length', [])) != 1:
+            raise ValueError('one Content-Length header is required')
+        length = int(self.headers['Content-Length'])
+        if not 0 <= length <= MAX_BODY_BYTES:
+            raise ValueError('request body size is out of range')
+        if self.headers.get_content_type() != 'application/json':
+            raise ValueError('Content-Type must be application/json')
+        content = self.rfile.read(length)
+        if len(content) != length:
+            raise ValueError('incomplete request body')
+        body = json.loads(content or b'{}')
+        if not isinstance(body, dict):
+            raise ValueError('request body must be an object')
+        return body
 
     def do_GET(self):
+        if self.path in ('/api/health', '/api/live'):
+            live = State.error is None and (State.runtime is None or State.runtime.healthy())
+            status = ready() if self.path == '/api/health' else live
+            self._json(200 if status else 503, {'ready': ready(), 'live': live, 'draining': SHUTDOWN.is_set()})
+            return
+        if not self.authorized():
+            return
         if self.path in ("/", "/index.html"):
             body = (HERE / "index.html").read_bytes()
             self.send_response(200)
@@ -562,13 +618,19 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(body)
         elif self.path == "/api/info":
             self._json(200, info())
-        elif self.path == "/api/health":
-            ready = State.runtime is not None and State.runtime.healthy()
-            self._json(200 if ready else 503, {"ready": ready, "error": State.error if ready or State.runtime is None else "GPU worker failed"})
         else:
             self._json(404, {"error": "not found"})
 
     def do_POST(self):
+        if not self.authorized():
+            return
+        origin = self.headers.get('Origin')
+        if origin and urlsplit(origin).netloc != self.headers.get('Host'):
+            self._json(403, {'error': 'cross-origin request rejected'})
+            return
+        if SHUTDOWN.is_set():
+            self._json(503, {'error': 'service is draining'})
+            return
         try:
             body = self._body()
         except Exception as error:
@@ -576,10 +638,14 @@ class Handler(BaseHTTPRequestHandler):
             return
         if self.path == "/api/reset":
             if State.store:
-                State.store.drop(str(body.get("session_id")))
+                try:
+                    State.store.drop(str(body.get("session_id")))
+                except SessionBusy as error:
+                    self._json(409, {'error': str(error)})
+                    return
             self._json(200, {"ok": True})
         elif self.path == "/api/chat":
-            if State.runtime is None or not State.runtime.healthy():
+            if not ready():
                 self._json(503, {"error": State.error or "模型还在加载"})
                 return
             self.chat(body)
@@ -592,7 +658,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def chat(self, body):
         try:
-            session_id = str(body["session_id"])
+            session_id = body['session_id']
+            if not isinstance(session_id, str) or not 1 <= len(session_id) <= 128:
+                raise ValueError('session_id must be 1–128 characters')
+            if not isinstance(body['messages'], list) or not 1 <= len(body['messages']) <= 512:
+                raise ValueError('messages must contain 1–512 items')
+            if any(not isinstance(m, dict) or any(m.get(k) is not None and not isinstance(m.get(k), str)
+                   for k in ('content', 'reasoning')) for m in body['messages']):
+                raise ValueError('message content and reasoning must be strings')
+            if sum(len(m.get(k) or '') for m in body['messages'] for k in ('content', 'reasoning')) > 262144:
+                raise ValueError('conversation text exceeds 262144 characters')
+            replay = body.get('replay') or {}
+            if not isinstance(replay, dict) or any(replay.get(k) is not None and not isinstance(replay.get(k), str)
+                                                 for k in ('content', 'reasoning')):
+                raise ValueError('replay content and reasoning must be strings')
+            if sum(len(replay.get(k) or '') for k in ('content', 'reasoning')) > MAX_OUTPUT_CHARS:
+                raise ValueError('replay text exceeds output character limit')
             history = [{"role": m["role"], "content": str(m.get("content") or ""),
                         "reasoning": str(m.get("reasoning") or "")} for m in body["messages"]]
             if not history or history[-1]["role"] != "user" or any(m["role"] not in ROLES for m in history):
@@ -601,6 +682,8 @@ class Handler(BaseHTTPRequestHandler):
             action = guard.get("action", "cut")
             user_rule, assistant_rule = parse_rule(guard["user_rule"]), parse_rule(guard["assistant_rule"])
             mode = body.get("mode", "llm")
+            if mode not in ('llm', 'replay') or action not in ('cut', 'observe', 'mark'):
+                raise ValueError('invalid mode or guard action')
         except Exception as error:
             self._json(400, {"error": f"请求格式不对：{error}"})
             return
@@ -608,30 +691,40 @@ class Handler(BaseHTTPRequestHandler):
             self._json(503, {"error": f"同时进行的对话已达上限 {MAX_ACTIVE_CHATS}，请稍后再试"})
             return
         try:
-            self.stream_chat(session_id, history, action, user_rule, assistant_rule, mode, body)
+            try:
+                session = State.store.acquire(session_id)
+            except SessionBusy as error:
+                self._json(409, {'error': str(error)})
+                return
+            try:
+                self.stream_chat(session, history, action, user_rule, assistant_rule, mode, body)
+            finally:
+                State.store.release(session_id, discard=getattr(session, 'failed', False))
         finally:
             ACTIVE_CHATS.release()
 
-    def stream_chat(self, session_id, history, action, user_rule, assistant_rule, mode, body):
+    def stream_chat(self, session, history, action, user_rule, assistant_rule, mode, body):
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream; charset=utf-8")
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Accel-Buffering", "no")
         self.end_headers()
-        session = State.store.get(session_id)
         stop = threading.Event()
         try:
-            with session.lock:
-                self.converse(session, history, action, user_rule, assistant_rule, mode, body, stop)
+            self.converse(session, history, action, user_rule, assistant_rule, mode, body, stop)
         except (BrokenPipeError, ConnectionResetError):
+            session.failed = True
             stop.set()
         except Exception as error:
+            session.failed = True
             stop.set()
             traceback.print_exc()
             try:
-                self.send_event("error", {"message": f"{type(error).__name__}: {error}"})
+                self.send_event("error", {"message": f"审核中止：{type(error).__name__}"})
             except OSError:
                 pass
+        finally:
+            stop.set()
 
     def converse(self, session, history, action, user_rule, assistant_rule, mode, body, stop):
         started = time.perf_counter()
@@ -645,7 +738,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_event("done", {"blocked": True, "latency": State.runtime.latency()})
             return
 
-        out = queue.Queue()
+        out = StreamQueue(stop, max_chars=MAX_OUTPUT_CHARS)
         if mode == "replay":
             reader = threading.Thread(target=read_replay, args=(body.get("replay") or {}, out, stop), daemon=True)
         else:
@@ -655,14 +748,17 @@ class Handler(BaseHTTPRequestHandler):
         cut, ended, finish, first_delta = None, False, None, None
         tracker, positions, scanned = RuleTracker(assistant_rule), [], 0   # committed content tokens of the reply
         stream_started = time.perf_counter()
+        deadline = time.monotonic() + MAX_CHAT_SECONDS
         while not ended:
+            if time.monotonic() >= deadline or SHUTDOWN.is_set():
+                raise TimeoutError('stream deadline or shutdown')
             try:
                 items = [out.get(timeout=10)]
             except queue.Empty:
                 self.wfile.write(b": ping\n\n")
                 self.wfile.flush()
                 continue
-            while True:
+            while len(items) < 128:
                 try:
                     items.append(out.get_nowait())
                 except queue.Empty:
@@ -676,7 +772,10 @@ class Handler(BaseHTTPRequestHandler):
                 elif kind == "finish":
                     finish = value
                 elif kind == "error":
+                    session.failed = True
                     self.send_event("error", {"message": value})
+                    stop.set()
+                    return
                 elif kind == "end":
                     ended = True
             if delta["reasoning"] or delta["content"]:
@@ -728,7 +827,7 @@ def info():
     meta = runtime.meta if runtime else {}
     thresholds = meta.get("thresholds", {})
     return {
-        "ready": runtime is not None, "error": State.error,
+        "ready": ready(), "error": State.error,
         "loading_seconds": None if State.loaded_at else round(time.time() - State.started_at),
         "checkpoint_sha256": meta.get("checkpoint_sha256"), "candidate": meta.get("candidate"),
         "selection_status": meta.get("selection_status"), "device": meta.get("device"),
@@ -738,7 +837,8 @@ def info():
         "presets": v10_presets(thresholds) if runtime else None,
         "model_label": meta.get("candidate"), "engine": meta.get("engine"),
         "selfcheck": State.selfcheck, "latency": runtime.latency() if runtime else {},
-        "sessions": len(State.store.sessions) if State.store else 0,
+        "sessions": State.store.stats()["sessions"] if State.store else 0,
+        "active_chats": State.store.stats()["active"] if State.store else 0,
         "builtin": {"available": builtin_available(), "label": BUILTIN["label"] or BUILTIN["model"],
                     "model": BUILTIN["model"], "host": urlsplit(BUILTIN["base_url"]).hostname or "",
                     "max_tokens": BUILTIN_MAX_TOKENS},
@@ -754,11 +854,34 @@ def main():
     parser.add_argument("--static", type=Path, default=STATIC_DIR, help="directory with vue/tdesign dist files")
     args = parser.parse_args()
     globals()["STATIC_DIR"] = args.static
+    if os.environ.get('GUARD_PRODUCTION') == '1' and not ACCESS_TOKEN:
+        raise ValueError('GUARD_PRODUCTION requires GUARD_ACCESS_TOKEN')
+    if ACCESS_TOKEN and len(ACCESS_TOKEN) < 24:
+        raise ValueError('GUARD_ACCESS_TOKEN must contain at least 24 characters')
+    server = LimitedHTTPServer((args.host, args.port), Handler)
     threading.Thread(target=load_model, args=(args.bundle.resolve(),), daemon=True).start()
-    server = ThreadingHTTPServer((args.host, args.port), Handler)
-    server.daemon_threads = True
+    def maintenance():
+        while not SHUTDOWN.wait(30):
+            if State.store:
+                State.store.prune()
+    threading.Thread(target=maintenance, daemon=True).start()
+    def stop_server(signum, frame):
+        if not SHUTDOWN.is_set():
+            SHUTDOWN.set()
+            threading.Thread(target=server.shutdown, daemon=True).start()
+    signal.signal(signal.SIGTERM, stop_server)
+    signal.signal(signal.SIGINT, stop_server)
     print(f"listening on {args.host}:{args.port}", flush=True)
-    server.serve_forever()
+    try:
+        server.serve_forever(poll_interval=.2)
+    finally:
+        SHUTDOWN.set()
+        deadline = time.monotonic() + DRAIN_SECONDS
+        while State.store and State.store.stats()['active'] and time.monotonic() < deadline:
+            time.sleep(.05)
+        server.server_close()
+        if State.runtime:
+            State.runtime.close(timeout=5)
 
 
 if __name__ == "__main__":

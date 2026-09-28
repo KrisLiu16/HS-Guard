@@ -16,7 +16,7 @@ bash start.sh
 
 Open http://127.0.0.1:8080/. Text replay needs no upstream API key. For live responses, set the `GUARD_BUILTIN_*` variables in `.env` with your endpoint, model and key. Supported protocols are `chat_completions`, `responses` and `anthropic_messages`. The upstream model generates text; HS-Guard scores it. The key stays on the server.
 
-`/api/health` returns 200 after model verification, graph warmup and a streaming self-check. `/api/info` includes rolling request latency and scheduler batch statistics. The HTTP server has no login system. Place it behind authentication before exposing it outside your trusted network. Custom upstream URLs are disabled by default.
+`/api/health` returns 200 after model verification, graph warmup and a streaming self-check. `/api/info` includes rolling request latency and scheduler batch statistics. Set `GUARD_ACCESS_TOKEN` for browser Basic authentication or API Bearer authentication. Production mode requires it. See [operations](OPERATIONS.md) for TLS, probes, resource bounds and deployment templates. Custom upstream URLs are disabled by default.
 
 ## GPU scheduling
 
@@ -27,18 +27,18 @@ The worker restores a request's checkpoint once on admission, keeps its slot thr
 | Setting | Default | Meaning |
 |---|---:|---|
 | `GUARD_BATCH_SLOTS` | 16 | Maximum simultaneous GPU workspaces, 1–16 |
-| `GUARD_BATCH_WAIT_MS` | 1 | Maximum idle-worker batch collection window, 0–10 ms |
+| `GUARD_BATCH_WAIT_MS` | 0.25 | Maximum idle-worker batch collection window, 0–10 ms |
 | Queue capacity | 128 | Accepted requests, including active requests |
 | Active HTTP chats | 16 | Excess chats receive HTTP 503 |
 
-A shorter batch window reduces single-stream delay but can split arrivals into smaller batches. The worker drains accepted requests on `close()`. A backend failure rejects subsequent requests and fails all pending work; health becomes unavailable. A future may be cancelled before admission. Once admitted, its GPU work finishes before its slot can be reused.
+A shorter batch window reduces single-stream delay but can split arrivals into smaller batches. The worker drains accepted requests within their deadlines; `close(timeout=10)` bounds the caller’s wait. A backend failure rejects subsequent requests and fails all pending work; health becomes unavailable. A future may be cancelled before admission. Once admitted, deadline handling occurs between GPU ticks before slot reuse; `Future.cancel()` applies only before admission.
 
-[Measured service latency](BENCHMARK.md) includes queueing, state copies and conversion to frontend records. The separate 352-stream engine benchmark is not an HTTP capacity measurement.
+[Current service validation](HARDENING.md) and [original service latency](BENCHMARK.md) includes queueing, state copies and conversion to frontend records. The separate 352-stream engine benchmark is not an HTTP capacity measurement.
 
 ## Tests
 
 ```bash
-python -m unittest discover -s . -p 'test_batching.py' -v
+python -m unittest discover -s . -p 'test_*.py' -v
 ```
 
 These CPU tests cover batch order, checkpoint branches, bounded queues, cancellation, slot reuse, prefill scheduling and failure propagation. GPU validation results and timing scope are in `BENCHMARK.md`.

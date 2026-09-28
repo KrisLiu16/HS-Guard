@@ -1,0 +1,1024 @@
+{
+  "wait1": {
+    "mode": "batch",
+    "weight_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "measurements": [
+      {
+        "concurrency": 1,
+        "repeat": 0,
+        "p50_ms": 3.6650048568844795,
+        "p95_ms": 3.6769618280231953,
+        "samples": 100
+      },
+      {
+        "concurrency": 1,
+        "repeat": 1,
+        "p50_ms": 3.662560135126114,
+        "p95_ms": 3.6801710724830627,
+        "samples": 100
+      },
+      {
+        "concurrency": 4,
+        "repeat": 0,
+        "p50_ms": 4.714667797088623,
+        "p95_ms": 4.848378710448742,
+        "samples": 400
+      },
+      {
+        "concurrency": 4,
+        "repeat": 1,
+        "p50_ms": 4.721234552562237,
+        "p95_ms": 4.858778510242701,
+        "samples": 400
+      },
+      {
+        "concurrency": 16,
+        "repeat": 0,
+        "p50_ms": 5.610416643321514,
+        "p95_ms": 6.04535099118948,
+        "samples": 1600
+      },
+      {
+        "concurrency": 16,
+        "repeat": 1,
+        "p50_ms": 5.64288254827261,
+        "p95_ms": 6.1196839436888695,
+        "samples": 1600
+      }
+    ],
+    "latency": {
+      "ticks": 2000,
+      "p50_ms": 5.62,
+      "p95_ms": 6.12,
+      "tokens_per_tick": 17.4,
+      "scheduler": {
+        "slots": 16,
+        "outstanding": 0,
+        "batches": 854,
+        "mean_batch": 6.98,
+        "max_batch": 16,
+        "failed": false,
+        "closed": false,
+        "queued_tokens": 0,
+        "expired": 0,
+        "rejected": 0,
+        "stalled": false
+      }
+    }
+  },
+  "wait025": {
+    "mode": "batch",
+    "weight_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "measurements": [
+      {
+        "concurrency": 1,
+        "repeat": 0,
+        "p50_ms": 2.903282642364502,
+        "p95_ms": 2.91797686368227,
+        "samples": 100
+      },
+      {
+        "concurrency": 1,
+        "repeat": 1,
+        "p50_ms": 2.901974134147167,
+        "p95_ms": 2.914147637784481,
+        "samples": 100
+      },
+      {
+        "concurrency": 4,
+        "repeat": 0,
+        "p50_ms": 3.9422381669282913,
+        "p95_ms": 4.065458290278912,
+        "samples": 400
+      },
+      {
+        "concurrency": 4,
+        "repeat": 1,
+        "p50_ms": 3.9474330842494965,
+        "p95_ms": 4.077421128749847,
+        "samples": 400
+      },
+      {
+        "concurrency": 16,
+        "repeat": 0,
+        "p50_ms": 5.634438246488571,
+        "p95_ms": 6.153050623834133,
+        "samples": 1600
+      },
+      {
+        "concurrency": 16,
+        "repeat": 1,
+        "p50_ms": 5.589437671005726,
+        "p95_ms": 6.076866760849953,
+        "samples": 1600
+      }
+    ],
+    "latency": {
+      "ticks": 2000,
+      "p50_ms": 5.58,
+      "p95_ms": 6.1,
+      "tokens_per_tick": 17.4,
+      "scheduler": {
+        "slots": 16,
+        "outstanding": 0,
+        "batches": 857,
+        "mean_batch": 6.96,
+        "max_batch": 16,
+        "failed": false,
+        "closed": false,
+        "queued_tokens": 0,
+        "expired": 0,
+        "rejected": 0,
+        "stalled": false
+      }
+    }
+  },
+  "http": {
+    "model_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "engine": "SlotStreamEngineV8",
+    "selfcheck": {
+      "tokens": 83,
+      "tokenizer_match": true,
+      "stream_positions": 83,
+      "max_prob_diff_stream_vs_whole": 0.0009,
+      "stream_seconds": 0.15
+    },
+    "cases": 64,
+    "parallel_sessions": 16,
+    "decision_changes": 0,
+    "max_abs_score_difference": 0.0050350601905855275
+  },
+  "soak": {
+    "seconds": 310.32,
+    "workers": 16,
+    "completed": 10397,
+    "errors": 0,
+    "http_errors": 0,
+    "errors_sample": [],
+    "response_p50_ms": 331.39209263026714,
+    "response_p95_ms": 948.5422801226377,
+    "max_sessions": 64,
+    "samples": [
+      {
+        "seconds": 0.02,
+        "sessions": 16,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 7.56,
+          "p95_ms": 21.73,
+          "tokens_per_tick": 2.9,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 776,
+            "mean_batch": 3.18,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 7413,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 2013.0,
+          "gpu_reserved_mib": 4730.0
+        }
+      },
+      {
+        "seconds": 10.02,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 33.12,
+          "p95_ms": 471.58,
+          "tokens_per_tick": 81.0,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 1110,
+            "mean_batch": 6.54,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 13279,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5330.7,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 20.03,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 34.03,
+          "p95_ms": 475.24,
+          "tokens_per_tick": 86.3,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 1433,
+            "mean_batch": 8.29,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 6969,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5518.5,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 30.03,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 37.61,
+          "p95_ms": 455.6,
+          "tokens_per_tick": 83.1,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 1755,
+            "mean_batch": 9.39,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 8971,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5346.4,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 40.03,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 39.05,
+          "p95_ms": 456.13,
+          "tokens_per_tick": 81.8,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 2073,
+            "mean_batch": 10.15,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 8100,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5362.1,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 50.04,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 39.66,
+          "p95_ms": 436.08,
+          "tokens_per_tick": 86.4,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 14,
+            "batches": 2395,
+            "mean_batch": 10.72,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 2375,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5816.0,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 60.04,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 38.8,
+          "p95_ms": 417.77,
+          "tokens_per_tick": 80.6,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 2723,
+            "mean_batch": 11.17,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 12995,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5127.4,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 70.04,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 38.27,
+          "p95_ms": 441.95,
+          "tokens_per_tick": 82.9,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 3041,
+            "mean_batch": 11.5,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 7292,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5346.7,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 80.04,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 34.76,
+          "p95_ms": 433.37,
+          "tokens_per_tick": 86.0,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 3357,
+            "mean_batch": 11.79,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 1224,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5706.6,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 90.05,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.04,
+          "p95_ms": 423.06,
+          "tokens_per_tick": 86.0,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 3678,
+            "mean_batch": 12.02,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 2516,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5503.3,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 100.05,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 38.43,
+          "p95_ms": 411.17,
+          "tokens_per_tick": 80.9,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 4002,
+            "mean_batch": 12.22,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 13877,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5237.3,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 110.05,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 35.36,
+          "p95_ms": 438.88,
+          "tokens_per_tick": 86.1,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 14,
+            "batches": 4321,
+            "mean_batch": 12.39,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 1292,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5634.5,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 120.05,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.77,
+          "p95_ms": 403.14,
+          "tokens_per_tick": 84.4,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 15,
+            "batches": 4640,
+            "mean_batch": 12.53,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 4361,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5359.3,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 130.06,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.91,
+          "p95_ms": 315.13,
+          "tokens_per_tick": 78.8,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 4958,
+            "mean_batch": 12.67,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 18464,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5064.9,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 140.06,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.67,
+          "p95_ms": 392.58,
+          "tokens_per_tick": 85.8,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 15,
+            "batches": 5281,
+            "mean_batch": 12.79,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 388,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5562.7,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 150.13,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.36,
+          "p95_ms": 401.13,
+          "tokens_per_tick": 85.3,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 5600,
+            "mean_batch": 12.89,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 3779,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5221.3,
+          "gpu_reserved_mib": 7080.0
+        }
+      },
+      {
+        "seconds": 160.13,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 34.66,
+          "p95_ms": 372.55,
+          "tokens_per_tick": 80.5,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 5936,
+            "mean_batch": 13.01,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 12718,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5252.6,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 170.13,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 35.94,
+          "p95_ms": 396.28,
+          "tokens_per_tick": 85.0,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 6259,
+            "mean_batch": 13.1,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 4066,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5205.7,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 180.13,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.14,
+          "p95_ms": 293.52,
+          "tokens_per_tick": 78.1,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 6587,
+            "mean_batch": 13.18,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 17313,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5064.8,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 190.14,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.83,
+          "p95_ms": 402.94,
+          "tokens_per_tick": 85.3,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 15,
+            "batches": 6902,
+            "mean_batch": 13.24,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 3561,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5628.3,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 200.14,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.69,
+          "p95_ms": 419.26,
+          "tokens_per_tick": 84.0,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 7222,
+            "mean_batch": 13.3,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 2929,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5315.3,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 210.14,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.09,
+          "p95_ms": 293.66,
+          "tokens_per_tick": 77.7,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 7546,
+            "mean_batch": 13.36,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 16170,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5174.6,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 220.15,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 35.6,
+          "p95_ms": 394.9,
+          "tokens_per_tick": 85.2,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 15,
+            "batches": 7862,
+            "mean_batch": 13.41,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 3558,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5437.6,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 230.15,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.93,
+          "p95_ms": 412.63,
+          "tokens_per_tick": 84.1,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 8178,
+            "mean_batch": 13.45,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 5231,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5769.2,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 240.15,
+        "sessions": 64,
+        "active": 15,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.14,
+          "p95_ms": 409.0,
+          "tokens_per_tick": 80.4,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 15,
+            "batches": 8499,
+            "mean_batch": 13.49,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 12706,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5377.9,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 250.16,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.39,
+          "p95_ms": 390.39,
+          "tokens_per_tick": 80.8,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 15,
+            "batches": 8821,
+            "mean_batch": 13.53,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 9550,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5284.1,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 260.16,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 36.64,
+          "p95_ms": 426.78,
+          "tokens_per_tick": 86.5,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 9136,
+            "mean_batch": 13.57,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 275,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5518.9,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 270.16,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 35.29,
+          "p95_ms": 420.77,
+          "tokens_per_tick": 85.7,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 9457,
+            "mean_batch": 13.6,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 2660,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5769.5,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 280.16,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 37.24,
+          "p95_ms": 443.96,
+          "tokens_per_tick": 83.0,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 9786,
+            "mean_batch": 13.62,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 12167,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5206.0,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 290.17,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 35.67,
+          "p95_ms": 408.55,
+          "tokens_per_tick": 85.1,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 16,
+            "batches": 10101,
+            "mean_batch": 13.65,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 3671,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5221.6,
+          "gpu_reserved_mib": 7392.0
+        }
+      },
+      {
+        "seconds": 300.32,
+        "sessions": 64,
+        "active": 16,
+        "latency": {
+          "ticks": 2000,
+          "p50_ms": 37.16,
+          "p95_ms": 404.11,
+          "tokens_per_tick": 84.8,
+          "scheduler": {
+            "slots": 16,
+            "outstanding": 15,
+            "batches": 10423,
+            "mean_batch": 13.68,
+            "max_batch": 16,
+            "failed": false,
+            "closed": false,
+            "queued_tokens": 3536,
+            "expired": 0,
+            "rejected": 0,
+            "stalled": false
+          },
+          "gpu_allocated_mib": 5471.9,
+          "gpu_reserved_mib": 7392.0
+        }
+      }
+    ]
+  },
+  "environment": {
+    "gpu": "NVIDIA L20",
+    "torch": "2.7.1",
+    "cuda": "12.8",
+    "prefix_tokens": 2048,
+    "increment_tokens": 1,
+    "warmup_ticks": 10,
+    "measured_ticks": 100,
+    "repeats": 2
+  },
+  "http_final": {
+    "model_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "engine": "SlotStreamEngineV8",
+    "selfcheck": {
+      "tokens": 83,
+      "tokenizer_match": true,
+      "stream_positions": 83,
+      "max_prob_diff_stream_vs_whole": 0.0009,
+      "stream_seconds": 0.15
+    },
+    "cases": 64,
+    "parallel_sessions": 16,
+    "decision_changes": 0,
+    "max_abs_score_difference": 0.005858171481365249
+  },
+  "edge_http": {
+    "same_session_http": 409,
+    "reset_active_http": 409,
+    "overload_http": 503,
+    "disconnect_drained": true,
+    "shutdown_seconds": 1.603
+  },
+  "deployed_http": {
+    "model_sha256": "01d07134b68f36352406bbdd3e3bc5dd72bef77006fde66ad4b7198eed2c4d4a",
+    "engine": "SlotStreamEngineV8",
+    "selfcheck": {
+      "tokens": 83,
+      "tokenizer_match": true,
+      "stream_positions": 83,
+      "max_prob_diff_stream_vs_whole": 0.0009,
+      "stream_seconds": 0.15
+    },
+    "cases": 64,
+    "parallel_sessions": 16,
+    "decision_changes": 0,
+    "max_abs_score_difference": 0.0039017780654143075
+  },
+  "deployed_source_sha256": {
+    "batching.py": "a4920a43433aafec67ef8b39580104e792ac033a2f3ca99f83b07cd8c0e52433",
+    "index.html": "a1de40ce0ea3f443ee78842f5735cbf9a9d0351db57870c0b0278103074ba3ae",
+    "runtime_v10.py": "ef9daba1ace9f70a789e9c70a103d071824d0f0309618db9a523a602f3e3ba78",
+    "server.py": "5437e0983cbf1c6b633da59e6e0eeb31ca4d428a478edbb40c55b6c8fb941dbf",
+    "service_limits.py": "a231965cfb57f5d40630fcb4e5f83bc59cc9a0be04a0373f8ca030e7f3f1dc5e"
+  }
+}

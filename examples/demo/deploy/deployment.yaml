@@ -1,0 +1,88 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hs-guard
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: hs-guard
+  template:
+    metadata:
+      labels:
+        app: hs-guard
+    spec:
+      terminationGracePeriodSeconds: 45
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+      - name: guard
+        image: hs-guard:local
+        ports:
+        - containerPort: 8080
+        env:
+        - name: GUARD_PRODUCTION
+          value: '1'
+        - name: GUARD_ACCESS_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: hs-guard-access
+              key: token
+        - name: GUARD_BATCH_WAIT_MS
+          value: '0.25'
+        resources:
+          requests:
+            cpu: '4'
+            memory: 16Gi
+            nvidia.com/gpu: '1'
+          limits:
+            cpu: '8'
+            memory: 40Gi
+            nvidia.com/gpu: '1'
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: [ALL]
+        startupProbe:
+          httpGet: {path: /api/health, port: 8080}
+          periodSeconds: 10
+          failureThreshold: 90
+        readinessProbe:
+          httpGet: {path: /api/health, port: 8080}
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        livenessProbe:
+          httpGet: {path: /api/live, port: 8080}
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - {name: model, mountPath: /models, readOnly: true}
+        - {name: tmp, mountPath: /tmp}
+        - {name: shm, mountPath: /dev/shm}
+      volumes:
+      - name: model
+        persistentVolumeClaim:
+          claimName: hs-guard-model
+      - name: tmp
+        emptyDir: {sizeLimit: 4Gi}
+      - name: shm
+        emptyDir: {medium: Memory, sizeLimit: 2Gi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hs-guard
+spec:
+  type: ClusterIP
+  selector:
+    app: hs-guard
+  ports:
+  - {name: http, port: 8080, targetPort: 8080}
