@@ -41,4 +41,3 @@ class ManifestTests(unittest.TestCase):
             with self.assertRaises(ValueError):verify_model(root)
 
 if __name__=='__main__':unittest.main()
-
