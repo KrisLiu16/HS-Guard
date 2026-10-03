@@ -8,6 +8,10 @@ Zhihao Liu · Naive N0.5
 
 HS-Guard scores prompts and live response tokens with a 754.5M-parameter hybrid backbone. It combines recurrent state with a 512-token attention window, two role-specific classifiers, and separate red-line and general-safety branches. It does not generate text.
 
+![A safe answer passes; a story that turns into drug-making instructions is cut at token 41](docs/figures/demo.gif)
+
+Text replay in the bundled [web demo](examples/demo/README.md) on one L20, with the default red-line rules. The answer is scored as it streams and cut once the score crosses the threshold. The demo interface is in Chinese.
+
 ![Safety results](docs/figures/safety.png)
 
 ### Selected results
